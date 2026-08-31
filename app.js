@@ -259,7 +259,7 @@ function drawFallbackCord(hex) {
   line.setAttribute("points", points);
   line.setAttribute("fill", "none");
   line.setAttribute("stroke", hex);
-  line.setAttribute("stroke-width", "2.4");
+  line.setAttribute("stroke-width", "3.2");
   line.setAttribute("stroke-linecap", "round");
   line.setAttribute("stroke-linejoin", "round");
   line.setAttribute("vector-effect", "non-scaling-stroke");

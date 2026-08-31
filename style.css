@@ -164,7 +164,7 @@ body {
   position: relative;
   width: 100%;
   max-width: 640px;
-  aspect-ratio: 536 / 466; /* matches images/coat-front.png — update if you replace that file with a different-shaped image */
+  aspect-ratio: 1106 / 1422; /* matches images/coat-front.png — update if you replace that file with a different-shaped image */
   border-radius: 4px;
   overflow: hidden;
   background: var(--panel);

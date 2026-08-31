@@ -18,20 +18,20 @@ const RESTRICTION_LABEL = {
 // Anchor points as PERCENTAGES of the coat image's width/height (0–100).
 // Wearer's LEFT = image-right (ribbon/pocket side). Wearer's RIGHT = image-left (nametag side).
 //
-// Estimated from images/coat-front.png: the illustration shows the hip-level
-// welt pocket flaps clearly (~74% down), but has no visible nametag or
-// breast-ribbon markings to calibrate against precisely.
+// Measured directly from images/coat-front.png (1106x1422) via pixel
+// color detection: nametag center ~31% x / 32.8-35.3% y, welt pocket
+// (mirrors the nametag on the other side) center ~67.7% x / 34.2-37.5% y.
 //
-// >>> USE THE "Calibrate anchors" BUTTON on the live page to fine-tune. <<<
-// Click the real spots on your coat image, read the x/y % it reports, and
-// paste those numbers in below.
+// If you replace coat-front.png again, use "Calibrate anchors" on the
+// live page to re-check these — click the real nametag/pocket corners
+// and compare against the numbers below.
 const ANCHORS = {
-  aviationBase: { x: 67, y: 22 },    // first aviation badge, upper chest, above the ribbon rack
-  aviationStep: 6,                    // vertical spacing (in % of image height) between stacked aviation badges
-  pocket: { x: 68, y: 74 },           // wearer's left welt pocket flap — rocketry fixed here (visible in the image)
-  pocketFlap: { x: 68, y: 71 },       // top edge of that pocket — NRA marksmanship fixed here
-  belowNametag: { x: 33, y: 34 },     // wearer's right, 1.5" below nametag
-  aboveNametag: { x: 33, y: 22 }      // centered, 0.5" above nametag
+  aviationBase: { x: 67.7, y: 27 },   // first aviation badge, above the ribbon rack (which sits above the pocket)
+  aviationStep: 5,                     // vertical spacing (in % of image height) between stacked aviation badges
+  pocket: { x: 67.7, y: 36 },          // wearer's left welt pocket — rocketry fixed here
+  pocketFlap: { x: 67.7, y: 34 },      // top edge of that pocket — NRA marksmanship fixed here
+  belowNametag: { x: 31, y: 40 },      // wearer's right, 1.5" below nametag
+  aboveNametag: { x: 31, y: 29 }       // centered over the nametag, 0.5" above it
 };
 
 // Fallback cord band path, as percentage-based points along the coat

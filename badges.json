@@ -1,0 +1,73 @@
+{
+  "source": "CAPR 39-1, 3 March 2020 — Men's Service Dress (Class A) New Style, para 4.1.5.2.2.4",
+  "limits": {
+    "totalMax": 4,
+    "aviationOccupationalMax": 2
+  },
+  "badges": [
+    {
+      "id": "suas_presolo",
+      "name": "sUAS Pre-Solo Wings",
+      "category": "aviation_occupational",
+      "restrictedTo": "any",
+      "note": "Placement per NHQ Directorate of Operations guidance; shown here per Attachment 4 (OLP)."
+    },
+    {
+      "id": "pilot_wings",
+      "name": "CAP Pilot Wings",
+      "category": "aviation_occupational",
+      "restrictedTo": "any"
+    },
+    {
+      "id": "observer_wings",
+      "name": "CAP Observer Wings",
+      "category": "aviation_occupational",
+      "restrictedTo": "any"
+    },
+    {
+      "id": "chaplain_badge",
+      "name": "Chaplain Badge",
+      "category": "aviation_occupational",
+      "restrictedTo": "any",
+      "note": "Always placed above all other aviation/occupational badges when worn."
+    },
+    {
+      "id": "rocketry",
+      "name": "Model Rocketry Badge",
+      "category": "specialty",
+      "restrictedTo": "cadet",
+      "fixedSlot": "pocket"
+    },
+    {
+      "id": "nra_marksmanship",
+      "name": "NRA Marksmanship Badge",
+      "category": "specialty",
+      "restrictedTo": "cadet",
+      "fixedSlot": "pocket_flap"
+    },
+    {
+      "id": "comm_specialty",
+      "name": "Communications Specialty Track Badge",
+      "category": "specialty",
+      "restrictedTo": "officer_nco"
+    },
+    {
+      "id": "safety_specialty",
+      "name": "Safety Specialty Track Badge",
+      "category": "specialty",
+      "restrictedTo": "officer_nco"
+    },
+    {
+      "id": "stem",
+      "name": "Cadet STEM Badge",
+      "category": "specialty",
+      "restrictedTo": "cadet"
+    },
+    {
+      "id": "cyber",
+      "name": "Cadet Cyber Badge",
+      "category": "specialty",
+      "restrictedTo": "cadet"
+    }
+  ]
+}

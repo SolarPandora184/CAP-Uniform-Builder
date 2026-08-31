@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CAP Class A Badge Builder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-title">
+    <span class="eyebrow">CAPR 39-1</span>
+    <h1>Class A Badge Placement Builder</h1>
+  </div>
+  <div class="counts" id="counts">
+    <div class="count-pill" id="count-total">Total 0 / 4</div>
+    <div class="count-pill" id="count-aviation">Aviation/Occ 0 / 2</div>
+  </div>
+</header>
+
+<main class="layout">
+  <aside class="panel checklist" id="checklist">
+    <!-- populated by app.js -->
+  </aside>
+
+  <section class="stage">
+    <svg id="coat" viewBox="0 0 400 620" xmlns="http://www.w3.org/2000/svg">
+      <!-- Coat silhouette -->
+      <path class="coat-body" d="
+        M 200 40
+        L 150 30 L 90 70 L 60 130 L 55 560 L 345 560 L 340 130 L 310 70 L 250 30 Z
+      "/>
+      <!-- Lapels -->
+      <path class="lapel" d="M 150 30 L 200 130 L 170 90 Z"/>
+      <path class="lapel" d="M 250 30 L 200 130 L 230 90 Z"/>
+      <!-- Collar seam -->
+      <line class="seam" x1="60" y1="130" x2="340" y2="130"/>
+
+      <!-- Wearer's right pocket flap (image-left) : nametag side -->
+      <rect class="pocket" x="105" y="330" width="70" height="26" rx="2"/>
+      <!-- Wearer's left pocket flap (image-right) : ribbon/rocketry side -->
+      <rect class="pocket" x="225" y="330" width="70" height="26" rx="2"/>
+
+      <!-- Nametag anchor (wearer's right, image-left) -->
+      <rect class="nametag" id="anchor-nametag" x="103" y="255" width="74" height="16" rx="1"/>
+      <text class="nametag-text" x="140" y="266" text-anchor="middle">LAST NAME</text>
+
+      <!-- dynamic content injected by app.js -->
+      <g id="ribbon-stack"></g>
+      <g id="badge-layer"></g>
+    </svg>
+
+    <p class="stage-caption">Front view &middot; wearer's right is image-left, wearer's left is image-right</p>
+  </section>
+</main>
+
+<footer class="foot">
+  <p>Placement logic follows CAPR 39-1 §4.1.5.2.2.4 and Attachment 4. This is a reference tool, not a substitute for the regulation &mdash; verify against the current CAPR 39-1 and your Wing's guidance before an inspection.</p>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>

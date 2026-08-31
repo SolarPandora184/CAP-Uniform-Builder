@@ -27,31 +27,11 @@
   </aside>
 
   <section class="stage">
-    <svg id="coat" viewBox="0 0 400 620" xmlns="http://www.w3.org/2000/svg">
-      <!-- Coat silhouette -->
-      <path class="coat-body" d="
-        M 200 40
-        L 150 30 L 90 70 L 60 130 L 55 560 L 345 560 L 340 130 L 310 70 L 250 30 Z
-      "/>
-      <!-- Lapels -->
-      <path class="lapel" d="M 150 30 L 200 130 L 170 90 Z"/>
-      <path class="lapel" d="M 250 30 L 200 130 L 230 90 Z"/>
-      <!-- Collar seam -->
-      <line class="seam" x1="60" y1="130" x2="340" y2="130"/>
-
-      <!-- Wearer's right pocket flap (image-left) : nametag side -->
-      <rect class="pocket" x="105" y="330" width="70" height="26" rx="2"/>
-      <!-- Wearer's left pocket flap (image-right) : ribbon/rocketry side -->
-      <rect class="pocket" x="225" y="330" width="70" height="26" rx="2"/>
-
-      <!-- Nametag anchor (wearer's right, image-left) -->
-      <rect class="nametag" id="anchor-nametag" x="103" y="255" width="74" height="16" rx="1"/>
-      <text class="nametag-text" x="140" y="266" text-anchor="middle">LAST NAME</text>
-
-      <!-- dynamic content injected by app.js -->
-      <g id="ribbon-stack"></g>
-      <g id="badge-layer"></g>
-    </svg>
+    <div class="uniform-frame" id="uniform-frame">
+      <img class="coat-img" src="images/coat-front.png" alt="CAP Class A coat, front view">
+      <div id="ribbon-stack"></div>
+      <div id="badge-layer"></div>
+    </div>
 
     <p class="stage-caption">Front view &middot; wearer's right is image-left, wearer's left is image-right</p>
   </section>

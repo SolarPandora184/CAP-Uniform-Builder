@@ -15,16 +15,23 @@ const RESTRICTION_LABEL = {
   any: null
 };
 
-// Anchor points in the 400x620 SVG coordinate space.
+// Anchor points as PERCENTAGES of the coat image's width/height (0–100).
 // Wearer's LEFT = image-right (ribbon/pocket side). Wearer's RIGHT = image-left (nametag side).
+//
+// >>> TUNE THESE once images/coat-front.png is uploaded. <<<
+// Open the page, eyeball where each anchor lands against the real photo,
+// and nudge the x/y percentages until they line up with the actual pocket,
+// nametag, and ribbon-rack position on your specific coat image.
 const ANCHORS = {
-  aviationBase: { x: 260, y: 300 },   // first aviation badge, just above wearer's-left pocket
-  aviationStep: 34,                    // vertical spacing between stacked aviation badges
-  pocket: { x: 260, y: 343 },          // wearer's left pocket — rocketry fixed here
-  pocketFlap: { x: 260, y: 328 },      // top edge of that pocket — NRA marksmanship fixed here
-  belowNametag: { x: 140, y: 300 },    // wearer's right, 1.5" below nametag
-  aboveNametag: { x: 140, y: 235 }     // centered, 0.5" above nametag
+  aviationBase: { x: 68, y: 46 },   // first aviation badge, just above wearer's-left pocket
+  aviationStep: 6,                   // vertical spacing (in % of image height) between stacked aviation badges
+  pocket: { x: 68, y: 56 },          // wearer's left pocket — rocketry fixed here
+  pocketFlap: { x: 68, y: 53 },      // top edge of that pocket — NRA marksmanship fixed here
+  belowNametag: { x: 34, y: 50 },    // wearer's right, 1.5" below nametag
+  aboveNametag: { x: 34, y: 40 }     // centered, 0.5" above nametag
 };
+
+const BADGE_IMG_DIR = "images/badges/";
 
 let BADGES = [];
 let LIMITS = { totalMax: 4, aviationOccupationalMax: 2 };
@@ -183,32 +190,17 @@ function render() {
 
   const placements = assignPositions();
   placements.forEach(({ badge, x, y }) => {
-    const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
-
-    const pin = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-    pin.setAttribute("class", "badge-pin");
-    pin.setAttribute("x", x - 30);
-    pin.setAttribute("y", y - 9);
-    pin.setAttribute("width", 60);
-    pin.setAttribute("height", 18);
-    pin.setAttribute("rx", 2);
-
-    const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
-    text.setAttribute("class", "badge-pin-text");
-    text.setAttribute("x", x);
-    text.setAttribute("y", y + 3);
-    text.textContent = abbreviate(badge.name);
-
-    g.appendChild(pin);
-    g.appendChild(text);
-    layer.appendChild(g);
+    const img = document.createElement("img");
+    img.className = "badge-pin";
+    img.src = `${BADGE_IMG_DIR}${badge.id}.png`;
+    img.alt = badge.name;
+    img.title = badge.name;
+    img.style.left = `${x}%`;
+    img.style.top = `${y}%`;
+    // If a badge PNG hasn't been uploaded yet, don't leave a broken-image icon.
+    img.addEventListener("error", () => { img.style.display = "none"; });
+    layer.appendChild(img);
   });
-}
-
-function abbreviate(name) {
-  const words = name.replace("Badge", "").replace("Wings", "Wgs").trim().split(" ");
-  if (words.join(" ").length <= 14) return words.join(" ");
-  return words.map(w => w[0]).join("");
 }
 
 init();

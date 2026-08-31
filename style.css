@@ -143,66 +143,42 @@ body {
   padding: 36px 24px;
 }
 
-#coat {
+.uniform-frame {
+  position: relative;
   width: 100%;
   max-width: 420px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--panel);
+  border: 1px solid var(--panel-line);
+}
+
+.coat-img {
+  display: block;
+  width: 100%;
   height: auto;
 }
 
-.coat-body {
-  fill: var(--coat);
-  stroke: var(--coat-line);
-  stroke-width: 2;
-}
-
-.lapel {
-  fill: #232d3b;
-  stroke: var(--coat-line);
-  stroke-width: 1.5;
-}
-
-.seam {
-  stroke: var(--coat-line);
-  stroke-width: 1;
-}
-
-.pocket {
-  fill: none;
-  stroke: var(--coat-line);
-  stroke-width: 1.5;
-}
-
-.nametag {
-  fill: #2c3646;
-  stroke: var(--gold-dim);
-  stroke-width: 1;
-}
-
-.nametag-text {
-  fill: var(--text-dim);
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: 9px;
-  letter-spacing: 0.08em;
-}
-
-.ribbon-row rect {
-  stroke: rgba(0,0,0,0.25);
-  stroke-width: 0.5;
+#ribbon-stack,
+#badge-layer {
+  position: absolute;
+  inset: 0;
 }
 
 .badge-pin {
-  fill: var(--gold);
-  stroke: #6b5a26;
-  stroke-width: 1;
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: var(--badge-size, 44px);
+  height: var(--badge-size, 44px);
+  object-fit: contain;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5));
 }
 
-.badge-pin-text {
-  fill: #10141b;
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: 7.5px;
-  font-weight: 600;
-  text-anchor: middle;
-  pointer-events: none;
+.ribbon-pin {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  height: var(--ribbon-height, 14px);
+  width: auto;
 }
 
 .stage-caption {

@@ -30,6 +30,29 @@ always claims the pocket position when worn, which bumps any other
 queued specialty badge (like a specialty track badge or STEM badge)
 down to the next open slot.
 
+## Shoulder cords
+
+Pick a cord color in the sidebar and the tool tries to load a full
+coat+cord composite photo. If you upload one, name it exactly:
+
+- `images/cords/coat-front-cord-red.png`
+- `images/cords/coat-front-cord-blue.png`
+- `images/cords/coat-front-cord-white.png`
+- `images/cords/coat-front-cord-black.png`
+- `images/cords/coat-front-cord-silver.png`
+
+If that file isn't there yet, the tool falls back to drawing a simple
+colored placeholder band over the plain coat so the page never looks
+broken while you're still gathering photos.
+
+## Calibrating anchor positions
+
+Badge positions are guesses based on what's visible in the coat
+illustration (mainly the hip-level pocket flaps). Click **"Calibrate
+anchors"** on the live page, then click anywhere on the coat image —
+it reports the exact x/y percentage under your cursor. Use that to
+correct the `ANCHORS` object near the top of `app.js`.
+
 ## Files
 
 - `index.html` — page structure and the SVG coat silhouette

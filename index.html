@@ -23,16 +23,28 @@
 
 <main class="layout">
   <aside class="panel checklist" id="checklist">
-    <!-- populated by app.js -->
+    <div class="cat-group">
+      <h2>Shoulder Cord</h2>
+      <p class="cat-sub">Only one worn at a time. Uses a real coat+cord photo if uploaded, otherwise a placeholder band.</p>
+      <div id="cord-options"></div>
+    </div>
+    <!-- badge checklist populated by app.js -->
+    <div id="badge-checklist"></div>
   </aside>
 
   <section class="stage">
     <div class="uniform-frame" id="uniform-frame">
-      <img class="coat-img" src="images/coat-front.png" alt="CAP Class A coat, front view">
+      <img class="coat-img" id="coat-img" src="images/coat-front.png" alt="CAP Class A coat, front view">
+      <svg id="cord-fallback" viewBox="0 0 100 100" preserveAspectRatio="none"></svg>
       <div id="ribbon-stack"></div>
       <div id="badge-layer"></div>
+      <div id="calibrate-crosshair" class="crosshair" hidden></div>
     </div>
 
+    <div class="stage-tools">
+      <button id="calibrate-toggle" type="button">Calibrate anchors</button>
+      <span id="calibrate-readout" class="calibrate-readout"></span>
+    </div>
     <p class="stage-caption">Front view &middot; wearer's right is image-left, wearer's left is image-right</p>
   </section>
 </main>

@@ -160,9 +160,81 @@ body {
 }
 
 #ribbon-stack,
-#badge-layer {
+#badge-layer,
+#cord-fallback {
   position: absolute;
   inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+#cord-fallback {
+  pointer-events: none;
+}
+
+.stage-tools {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+#calibrate-toggle {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  padding: 6px 14px;
+  border-radius: 3px;
+  border: 1px solid var(--panel-line);
+  background: var(--panel);
+  color: var(--text-dim);
+  cursor: pointer;
+}
+
+#calibrate-toggle.active {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+.calibrate-readout {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 13px;
+  color: var(--gold);
+  letter-spacing: 0.02em;
+}
+
+.crosshair {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--gold);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.crosshair::before,
+.crosshair::after {
+  content: "";
+  position: absolute;
+  background: var(--gold);
+}
+
+.crosshair::before {
+  left: 50%;
+  top: -6px;
+  width: 1px;
+  height: 26px;
+  transform: translateX(-50%);
+}
+
+.crosshair::after {
+  top: 50%;
+  left: -6px;
+  height: 1px;
+  width: 26px;
+  transform: translateY(-50%);
 }
 
 .badge-pin {

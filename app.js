@@ -18,36 +18,59 @@ const RESTRICTION_LABEL = {
 // Anchor points as PERCENTAGES of the coat image's width/height (0–100).
 // Wearer's LEFT = image-right (ribbon/pocket side). Wearer's RIGHT = image-left (nametag side).
 //
-// >>> TUNE THESE once images/coat-front.png is uploaded. <<<
-// Open the page, eyeball where each anchor lands against the real photo,
-// and nudge the x/y percentages until they line up with the actual pocket,
-// nametag, and ribbon-rack position on your specific coat image.
+// Estimated from images/coat-front.png: the illustration shows the hip-level
+// welt pocket flaps clearly (~74% down), but has no visible nametag or
+// breast-ribbon markings to calibrate against precisely.
+//
+// >>> USE THE "Calibrate anchors" BUTTON on the live page to fine-tune. <<<
+// Click the real spots on your coat image, read the x/y % it reports, and
+// paste those numbers in below.
 const ANCHORS = {
-  aviationBase: { x: 68, y: 46 },   // first aviation badge, just above wearer's-left pocket
-  aviationStep: 6,                   // vertical spacing (in % of image height) between stacked aviation badges
-  pocket: { x: 68, y: 56 },          // wearer's left pocket — rocketry fixed here
-  pocketFlap: { x: 68, y: 53 },      // top edge of that pocket — NRA marksmanship fixed here
-  belowNametag: { x: 34, y: 50 },    // wearer's right, 1.5" below nametag
-  aboveNametag: { x: 34, y: 40 }     // centered, 0.5" above nametag
+  aviationBase: { x: 67, y: 22 },    // first aviation badge, upper chest, above the ribbon rack
+  aviationStep: 6,                    // vertical spacing (in % of image height) between stacked aviation badges
+  pocket: { x: 68, y: 74 },           // wearer's left welt pocket flap — rocketry fixed here (visible in the image)
+  pocketFlap: { x: 68, y: 71 },       // top edge of that pocket — NRA marksmanship fixed here
+  belowNametag: { x: 33, y: 34 },     // wearer's right, 1.5" below nametag
+  aboveNametag: { x: 33, y: 22 }      // centered, 0.5" above nametag
 };
+
+// Fallback cord band path, as percentage-based points along the coat
+// (used only if a real coat+cord photo hasn't been uploaded for the
+// selected color). Runs from the wearer's-left shoulder seam down
+// under the arm — a rough stand-in, not a precise drape.
+const CORD_PATH = [
+  { x: 74, y: 8 },
+  { x: 78, y: 18 },
+  { x: 70, y: 30 },
+  { x: 66, y: 44 }
+];
 
 const BADGE_IMG_DIR = "images/badges/";
 
 let BADGES = [];
+let CORDS = [];
 let LIMITS = { totalMax: 4, aviationOccupationalMax: 2 };
 const selected = new Set();
+let selectedCord = null;
 
 async function init() {
-  const res = await fetch("badges.json");
-  const data = await res.json();
+  const [badgeRes, cordRes] = await Promise.all([
+    fetch("badges.json"),
+    fetch("cords.json")
+  ]);
+  const data = await badgeRes.json();
+  const cordData = await cordRes.json();
   BADGES = data.badges;
   LIMITS = data.limits;
+  CORDS = cordData.cords;
   renderChecklist();
+  renderCordOptions();
+  setupCalibration();
   render();
 }
 
 function renderChecklist() {
-  const root = document.getElementById("checklist");
+  const root = document.getElementById("badge-checklist");
   root.innerHTML = "";
 
   for (const [catKey, meta] of Object.entries(CATEGORY_META)) {
@@ -179,6 +202,118 @@ function assignPositions() {
   });
 
   return placements;
+}
+
+function renderCordOptions() {
+  const root = document.getElementById("cord-options");
+  root.innerHTML = "";
+
+  const noneRow = buildCordRow({ id: "", name: "None" }, true);
+  root.appendChild(noneRow);
+
+  CORDS.forEach(c => root.appendChild(buildCordRow(c, false)));
+}
+
+function buildCordRow(cord, checkedByDefault) {
+  const row = document.createElement("div");
+  row.className = "badge-row";
+
+  const radio = document.createElement("input");
+  radio.type = "radio";
+  radio.name = "cord";
+  radio.id = `cord-${cord.id || "none"}`;
+  radio.checked = checkedByDefault;
+  radio.addEventListener("change", () => {
+    selectedCord = cord.id || null;
+    renderCord();
+  });
+
+  const label = document.createElement("label");
+  label.setAttribute("for", radio.id);
+  const nameEl = document.createElement("div");
+  nameEl.className = "b-name";
+  nameEl.textContent = cord.name;
+  label.appendChild(nameEl);
+
+  row.appendChild(radio);
+  row.appendChild(label);
+  return row;
+}
+
+function renderCord() {
+  const coatImg = document.getElementById("coat-img");
+  const fallbackSvg = document.getElementById("cord-fallback");
+  fallbackSvg.innerHTML = "";
+
+  if (!selectedCord) {
+    coatImg.src = "images/coat-front.png";
+    return;
+  }
+
+  const cord = CORDS.find(c => c.id === selectedCord);
+
+  // Try the real coat+cord composite photo first.
+  const probe = new Image();
+  probe.onload = () => { coatImg.src = cord.image; };
+  probe.onerror = () => {
+    // No real photo uploaded yet — keep the plain coat and draw a
+    // simple placeholder band in the cord's color instead.
+    coatImg.src = "images/coat-front.png";
+    drawFallbackCord(cord.hex);
+  };
+  probe.src = cord.image;
+}
+
+function drawFallbackCord(hex) {
+  const svg = document.getElementById("cord-fallback");
+  const points = CORD_PATH.map(p => `${p.x},${p.y}`).join(" ");
+  const ns = "http://www.w3.org/2000/svg";
+
+  const line = document.createElementNS(ns, "polyline");
+  line.setAttribute("points", points);
+  line.setAttribute("fill", "none");
+  line.setAttribute("stroke", hex);
+  line.setAttribute("stroke-width", "2.4");
+  line.setAttribute("stroke-linecap", "round");
+  line.setAttribute("stroke-linejoin", "round");
+  line.setAttribute("vector-effect", "non-scaling-stroke");
+  svg.appendChild(line);
+
+  const loop = document.createElementNS(ns, "circle");
+  loop.setAttribute("cx", CORD_PATH[0].x);
+  loop.setAttribute("cy", CORD_PATH[0].y);
+  loop.setAttribute("r", "1.8");
+  loop.setAttribute("fill", hex);
+  svg.appendChild(loop);
+}
+
+// --- Calibration mode: click the coat to read off % coordinates for ANCHORS ---
+function setupCalibration() {
+  const toggleBtn = document.getElementById("calibrate-toggle");
+  const frame = document.getElementById("uniform-frame");
+  const crosshair = document.getElementById("calibrate-crosshair");
+  const readout = document.getElementById("calibrate-readout");
+  let active = false;
+
+  toggleBtn.addEventListener("click", () => {
+    active = !active;
+    toggleBtn.classList.toggle("active", active);
+    crosshair.hidden = !active;
+    readout.textContent = active ? "Click the coat to read x/y %" : "";
+    frame.style.cursor = active ? "crosshair" : "default";
+  });
+
+  frame.addEventListener("click", (e) => {
+    if (!active) return;
+    const rect = frame.getBoundingClientRect();
+    const xPct = ((e.clientX - rect.left) / rect.width) * 100;
+    const yPct = ((e.clientY - rect.top) / rect.height) * 100;
+    crosshair.style.left = `${xPct}%`;
+    crosshair.style.top = `${yPct}%`;
+    const text = `x: ${xPct.toFixed(1)}%, y: ${yPct.toFixed(1)}%`;
+    readout.textContent = text;
+    console.log("Anchor point ->", text);
+  });
 }
 
 function render() {

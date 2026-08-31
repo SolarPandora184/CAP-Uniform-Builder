@@ -9,27 +9,8 @@
       "id": "suas_presolo",
       "name": "sUAS Pre-Solo Wings",
       "category": "aviation_occupational",
-      "restrictedTo": "any",
+      "restrictedTo": "cadet",
       "note": "Placement per NHQ Directorate of Operations guidance; shown here per Attachment 4 (OLP)."
-    },
-    {
-      "id": "pilot_wings",
-      "name": "CAP Pilot Wings",
-      "category": "aviation_occupational",
-      "restrictedTo": "any"
-    },
-    {
-      "id": "observer_wings",
-      "name": "CAP Observer Wings",
-      "category": "aviation_occupational",
-      "restrictedTo": "any"
-    },
-    {
-      "id": "chaplain_badge",
-      "name": "Chaplain Badge",
-      "category": "aviation_occupational",
-      "restrictedTo": "any",
-      "note": "Always placed above all other aviation/occupational badges when worn."
     },
     {
       "id": "rocketry",
@@ -49,13 +30,13 @@
       "id": "comm_specialty",
       "name": "Communications Specialty Track Badge",
       "category": "specialty",
-      "restrictedTo": "officer_nco"
+      "restrictedTo": "cadet_nco"
     },
     {
       "id": "safety_specialty",
       "name": "Safety Specialty Track Badge",
       "category": "specialty",
-      "restrictedTo": "officer_nco"
+      "restrictedTo": "cadet_nco"
     },
     {
       "id": "stem",

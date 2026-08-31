@@ -2,9 +2,11 @@
 
 A live reference tool for placing badges and devices on the CAP Men's
 Service Dress (Class A) coat, per **CAPR 39-1, §4.1.5.2.2.4** and
-**Attachment 4**. Check the badges you're authorized to wear and the
-diagram updates to show where each one goes, enforcing the max-4-total
-and max-2-aviation/occupational limits as you go.
+**Attachment 4**. Scoped to **cadet-achievable badges only** — no
+senior-member-only insignia (pilot wings, chaplain badges, etc.) is
+included. Check the badges you're authorized to wear and the diagram
+updates to show where each one goes, enforcing the max-4-total and
+max-2-aviation/occupational limits as you go.
 
 Live at: `https://<username>.github.io/CAP-Uniform-Builder/` once
 GitHub Pages is enabled for this repo (Settings → Pages → deploy from
@@ -47,7 +49,7 @@ etc.), add an entry with:
   "id": "unique_id",
   "name": "Display Name",
   "category": "aviation_occupational | specialty",
-  "restrictedTo": "cadet | officer_nco | any",
+  "restrictedTo": "cadet | cadet_nco",
   "fixedSlot": "pocket | pocket_flap"   // omit unless it's rocketry/marksmanship-style
 }
 ```

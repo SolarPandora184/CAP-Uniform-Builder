@@ -11,7 +11,7 @@ const CATEGORY_META = {
 
 const RESTRICTION_LABEL = {
   cadet: "cadets only",
-  officer_nco: "officers & NCOs",
+  cadet_nco: "cadet NCOs & officers",
   any: null
 };
 
@@ -148,9 +148,8 @@ function assignPositions() {
   const chosen = [...selected].map(id => BADGES.find(b => b.id === id));
   const placements = [];
 
-  // Aviation/occupational: stack upward from the base anchor, chaplain badges first if present.
+  // Aviation/occupational badges: stack upward from the base anchor, in selection order.
   const aviation = chosen.filter(b => b.category === "aviation_occupational");
-  aviation.sort((a, b) => (a.id === "chaplain_badge" ? -1 : 0) - (b.id === "chaplain_badge" ? -1 : 0));
   aviation.forEach((b, i) => {
     placements.push({
       badge: b,

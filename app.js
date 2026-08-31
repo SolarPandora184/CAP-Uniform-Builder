@@ -4,8 +4,8 @@ const CATEGORY_META = {
     sub: "Max 2 worn together, wearer's left, stacked above the ribbon rack."
   },
   specialty: {
-    label: "Service, Specialty Track, STEM, Cyber, Rocketry & Marksmanship",
-    sub: "Max 4 combined with the badges above. Rocketry and NRA Marksmanship have fixed spots."
+    label: "STEM, Cyber, Rocketry & Marksmanship",
+    sub: "Max 4 combined with the badges above, including the Specialty Track Badge dropdown. Rocketry and NRA Marksmanship have fixed spots."
   }
 };
 
@@ -47,11 +47,17 @@ const CORD_PATH = [
 
 const BADGE_IMG_DIR = "images/badges/";
 
+function findBadge(id) {
+  return BADGES.find(b => b.id === id) || TRACKS.find(b => b.id === id);
+}
+
 let BADGES = [];
+let TRACKS = [];
 let CORDS = [];
 let LIMITS = { totalMax: 4, aviationOccupationalMax: 2 };
 const selected = new Set();
 let selectedCord = null;
+let selectedTrack = null;
 
 async function init() {
   const [badgeRes, cordRes] = await Promise.all([
@@ -61,10 +67,12 @@ async function init() {
   const data = await badgeRes.json();
   const cordData = await cordRes.json();
   BADGES = data.badges;
+  TRACKS = data.specialtyTracks || [];
   LIMITS = data.limits;
   CORDS = cordData.cords;
   renderChecklist();
   renderCordOptions();
+  renderTrackOptions();
   setupCalibration();
   render();
 }
@@ -124,13 +132,13 @@ function renderChecklist() {
 }
 
 function toggle(id, checkbox) {
-  const badge = BADGES.find(b => b.id === id);
+  const badge = findBadge(id);
   const willSelect = checkbox.checked;
 
   if (willSelect) {
     const totalCount = selected.size;
     const aviationCount = [...selected].filter(bid =>
-      BADGES.find(b => b.id === bid).category === "aviation_occupational"
+      findBadge(bid).category === "aviation_occupational"
     ).length;
 
     if (totalCount >= LIMITS.totalMax) {
@@ -160,7 +168,7 @@ function flashLimit(pillId) {
 function updateCounts() {
   const total = selected.size;
   const aviation = [...selected].filter(bid =>
-    BADGES.find(b => b.id === bid).category === "aviation_occupational"
+    findBadge(bid).category === "aviation_occupational"
   ).length;
 
   document.getElementById("count-total").textContent = `Total ${total} / ${LIMITS.totalMax}`;
@@ -168,7 +176,7 @@ function updateCounts() {
 }
 
 function assignPositions() {
-  const chosen = [...selected].map(id => BADGES.find(b => b.id === id));
+  const chosen = [...selected].map(id => findBadge(id));
   const placements = [];
 
   // Aviation/occupational badges: stack upward from the base anchor, in selection order.
@@ -202,6 +210,43 @@ function assignPositions() {
   });
 
   return placements;
+}
+
+function renderTrackOptions() {
+  const select = document.getElementById("track-select");
+  select.innerHTML = "";
+
+  const noneOpt = document.createElement("option");
+  noneOpt.value = "";
+  noneOpt.textContent = "None";
+  select.appendChild(noneOpt);
+
+  TRACKS.forEach(t => {
+    const opt = document.createElement("option");
+    opt.value = t.id;
+    opt.textContent = t.name;
+    select.appendChild(opt);
+  });
+
+  select.addEventListener("change", () => {
+    const newId = select.value || null;
+
+    if (newId) {
+      // Count everything else already selected, excluding the track we're about to replace.
+      const totalExcludingOldTrack = [...selected].filter(id => id !== selectedTrack).length;
+
+      if (totalExcludingOldTrack >= LIMITS.totalMax) {
+        select.value = selectedTrack || "";
+        flashLimit("count-total");
+        return;
+      }
+    }
+
+    if (selectedTrack) selected.delete(selectedTrack);
+    if (newId) selected.add(newId);
+    selectedTrack = newId;
+    render();
+  });
 }
 
 function renderCordOptions() {

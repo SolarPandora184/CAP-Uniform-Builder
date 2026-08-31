@@ -27,6 +27,20 @@
       "fixedSlot": "pocket_flap"
     },
     {
+      "id": "stem",
+      "name": "Cadet STEM Badge",
+      "category": "specialty",
+      "restrictedTo": "cadet"
+    },
+    {
+      "id": "cyber",
+      "name": "Cadet Cyber Badge",
+      "category": "specialty",
+      "restrictedTo": "cadet"
+    }
+  ],
+  "specialtyTracks": [
+    {
       "id": "comm_specialty",
       "name": "Communications Specialty Track Badge",
       "category": "specialty",
@@ -39,16 +53,10 @@
       "restrictedTo": "cadet_nco"
     },
     {
-      "id": "stem",
-      "name": "Cadet STEM Badge",
+      "id": "es_specialty",
+      "name": "Emergency Services Specialty Track Badge",
       "category": "specialty",
-      "restrictedTo": "cadet"
-    },
-    {
-      "id": "cyber",
-      "name": "Cadet Cyber Badge",
-      "category": "specialty",
-      "restrictedTo": "cadet"
+      "restrictedTo": "cadet_nco"
     }
   ]
 }

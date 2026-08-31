@@ -25,6 +25,12 @@
       "image": "images/cords/coat-front-cord-black.png"
     },
     {
+      "id": "green",
+      "name": "Green Cord",
+      "hex": "#3f6b3f",
+      "image": "images/cords/coat-front-cord-green.png"
+    },
+    {
       "id": "silver",
       "name": "Silver Cord (Honor Guard)",
       "hex": "#b9bec7",

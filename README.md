@@ -32,11 +32,13 @@ down to the next open slot.
 
 ## Shoulder cords
 
-Pick a cord color in the sidebar and the tool tries to load a full
-coat+cord composite photo. If you upload one, name it exactly:
+Pick a cord color from the dropdown and the tool tries to load a full
+coat+cord composite photo. If you upload one, name it exactly as
+below — **do not include curly braces**, just the plain color name:
 
 - `images/cords/coat-front-cord-red.png`
 - `images/cords/coat-front-cord-blue.png`
+- `images/cords/coat-front-cord-green.png`
 - `images/cords/coat-front-cord-white.png`
 - `images/cords/coat-front-cord-black.png`
 - `images/cords/coat-front-cord-silver.png`
@@ -44,6 +46,13 @@ coat+cord composite photo. If you upload one, name it exactly:
 If that file isn't there yet, the tool falls back to drawing a simple
 colored placeholder band over the plain coat so the page never looks
 broken while you're still gathering photos.
+
+Cord photos should be cropped/framed to roughly match
+`images/coat-front.png`'s proportions — the frame is locked to that
+image's aspect ratio and crops anything else to fit, so a very
+differently-framed photo (e.g. a full torso shot vs. a flat coat
+graphic) will cause badges to land slightly off from where they
+should be. Crop it close to just the coat before uploading if you can.
 
 ## Calibrating anchor positions
 

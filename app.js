@@ -205,39 +205,25 @@ function assignPositions() {
 }
 
 function renderCordOptions() {
-  const root = document.getElementById("cord-options");
-  root.innerHTML = "";
+  const select = document.getElementById("cord-select");
+  select.innerHTML = "";
 
-  const noneRow = buildCordRow({ id: "", name: "None" }, true);
-  root.appendChild(noneRow);
+  const noneOpt = document.createElement("option");
+  noneOpt.value = "";
+  noneOpt.textContent = "None";
+  select.appendChild(noneOpt);
 
-  CORDS.forEach(c => root.appendChild(buildCordRow(c, false)));
-}
-
-function buildCordRow(cord, checkedByDefault) {
-  const row = document.createElement("div");
-  row.className = "badge-row";
-
-  const radio = document.createElement("input");
-  radio.type = "radio";
-  radio.name = "cord";
-  radio.id = `cord-${cord.id || "none"}`;
-  radio.checked = checkedByDefault;
-  radio.addEventListener("change", () => {
-    selectedCord = cord.id || null;
-    renderCord();
+  CORDS.forEach(c => {
+    const opt = document.createElement("option");
+    opt.value = c.id;
+    opt.textContent = c.name;
+    select.appendChild(opt);
   });
 
-  const label = document.createElement("label");
-  label.setAttribute("for", radio.id);
-  const nameEl = document.createElement("div");
-  nameEl.className = "b-name";
-  nameEl.textContent = cord.name;
-  label.appendChild(nameEl);
-
-  row.appendChild(radio);
-  row.appendChild(label);
-  return row;
+  select.addEventListener("change", () => {
+    selectedCord = select.value || null;
+    renderCord();
+  });
 }
 
 function renderCord() {

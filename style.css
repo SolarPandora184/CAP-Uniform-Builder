@@ -101,6 +101,23 @@ body {
   margin: 0 0 12px;
 }
 
+.cord-select {
+  width: 100%;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  color: var(--text);
+  background: var(--coat);
+  border: 1px solid var(--panel-line);
+  border-radius: 3px;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+
+.cord-select:focus {
+  outline: none;
+  border-color: var(--gold);
+}
+
 .badge-row {
   display: flex;
   align-items: flex-start;
@@ -147,6 +164,7 @@ body {
   position: relative;
   width: 100%;
   max-width: 420px;
+  aspect-ratio: 536 / 466; /* matches images/coat-front.png — update if you replace that file with a different-shaped image */
   border-radius: 4px;
   overflow: hidden;
   background: var(--panel);
@@ -156,7 +174,9 @@ body {
 .coat-img {
   display: block;
   width: 100%;
-  height: auto;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
 }
 
 #ribbon-stack,

@@ -118,6 +118,23 @@ body {
   border-color: var(--gold);
 }
 
+#ribbon-checklist {
+  max-height: 360px;
+  overflow-y: auto;
+  border: 1px solid var(--panel-line);
+  border-radius: 3px;
+  padding: 4px 12px;
+}
+
+#ribbon-checklist .cat-group {
+  margin-bottom: 14px;
+}
+
+#ribbon-checklist .cat-group h2 {
+  font-size: 13px;
+  margin-top: 10px;
+}
+
 .badge-row {
   display: flex;
   align-items: flex-start;

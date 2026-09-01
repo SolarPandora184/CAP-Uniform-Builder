@@ -45,6 +45,19 @@ const CORD_PATH = [
   { x: 66, y: 44 }
 ];
 
+// Ribbon rack geometry, in the same % coordinate space as ANCHORS.
+// Rack width matches the wearer's-left welt pocket edges (measured from
+// images/coat-front.png), per CAPR 39-1 11.2.7: rows of three are
+// "centered above the pocket between the left and right pocket edges."
+// The bottom row's bottom edge sits exactly on ANCHORS.pocketFlap.y
+// ("resting on, but not over, top edge of left welt or pocket").
+const RIBBON_RACK = {
+  leftPct: 59.9,
+  rightPct: 75.5,
+  rowHeightPct: 2.4,     // tune with "Calibrate anchors" if rows look too tall/short
+  aviationGapPct: 3.2    // gap between top ribbon row (or pocket, if none) and the first aviation badge
+};
+
 const BADGE_IMG_DIR = "images/badges/";
 
 function findBadge(id) {
@@ -54,25 +67,33 @@ function findBadge(id) {
 let BADGES = [];
 let TRACKS = [];
 let CORDS = [];
+let RIBBONS = [];
+let RIBBON_ROW_SIZE = 3;
 let LIMITS = { totalMax: 4, aviationOccupationalMax: 2 };
 const selected = new Set();
+const selectedRibbons = new Set();
 let selectedCord = null;
 let selectedTrack = null;
 
 async function init() {
-  const [badgeRes, cordRes] = await Promise.all([
+  const [badgeRes, cordRes, ribbonRes] = await Promise.all([
     fetch("badges.json"),
-    fetch("cords.json")
+    fetch("cords.json"),
+    fetch("ribbons.json")
   ]);
   const data = await badgeRes.json();
   const cordData = await cordRes.json();
+  const ribbonData = await ribbonRes.json();
   BADGES = data.badges;
   TRACKS = data.specialtyTracks || [];
   LIMITS = data.limits;
   CORDS = cordData.cords;
+  RIBBONS = ribbonData.ribbons;
+  RIBBON_ROW_SIZE = ribbonData.rowSize || 3;
   renderChecklist();
   renderCordOptions();
   renderTrackOptions();
+  renderRibbonChecklist();
   setupCalibration();
   render();
 }
@@ -175,17 +196,18 @@ function updateCounts() {
   document.getElementById("count-aviation").textContent = `Aviation/Occ ${aviation} / ${LIMITS.aviationOccupationalMax}`;
 }
 
-function assignPositions() {
+function assignPositions(ribbonTopY) {
   const chosen = [...selected].map(id => findBadge(id));
   const placements = [];
 
   // Aviation/occupational badges: stack upward from the base anchor, in selection order.
+  const aviationBaseY = ribbonTopY - RIBBON_RACK.aviationGapPct;
   const aviation = chosen.filter(b => b.category === "aviation_occupational");
   aviation.forEach((b, i) => {
     placements.push({
       badge: b,
       x: ANCHORS.aviationBase.x,
-      y: ANCHORS.aviationBase.y - i * ANCHORS.aviationStep
+      y: aviationBaseY - i * ANCHORS.aviationStep
     });
   });
 
@@ -210,6 +232,113 @@ function assignPositions() {
   });
 
   return placements;
+}
+
+const RIBBON_GROUP_LABELS = {
+  decoration: "Civil Air Patrol Decorations",
+  cadet_award: "Cadet Program Awards/Achievements",
+  service: "Service Awards",
+  activity: "Activity & Participation Awards"
+};
+
+function renderRibbonChecklist() {
+  const root = document.getElementById("ribbon-checklist");
+  root.innerHTML = "";
+
+  for (const [groupKey, label] of Object.entries(RIBBON_GROUP_LABELS)) {
+    const group = document.createElement("div");
+    group.className = "cat-group";
+
+    const h3 = document.createElement("h2");
+    h3.style.fontSize = "14px";
+    h3.textContent = label;
+    group.appendChild(h3);
+
+    RIBBONS.filter(r => r.group === groupKey).forEach(r => {
+      const row = document.createElement("div");
+      row.className = "badge-row";
+
+      const cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.id = `rb-${r.id}`;
+      cb.addEventListener("change", () => {
+        if (cb.checked) selectedRibbons.add(r.id);
+        else selectedRibbons.delete(r.id);
+        render();
+      });
+
+      const label2 = document.createElement("label");
+      label2.setAttribute("for", cb.id);
+      const nameEl = document.createElement("div");
+      nameEl.className = "b-name";
+      nameEl.textContent = r.name;
+      label2.appendChild(nameEl);
+
+      row.appendChild(cb);
+      row.appendChild(label2);
+      group.appendChild(row);
+    });
+
+    root.appendChild(group);
+  }
+}
+
+// Builds the ribbon rack: sorts selected ribbons by precedence (1 = highest,
+// worn topmost), splits into rows, and returns both the placements and the
+// y-coordinate of the top of the stack (or the pocket, if no ribbons are
+// selected) so aviation badges can be anchored relative to it.
+function layoutRibbonRack() {
+  const chosen = [...selectedRibbons]
+    .map(id => RIBBONS.find(r => r.id === id))
+    .filter(Boolean)
+    .sort((a, b) => a.precedence - b.precedence);
+
+  const n = chosen.length;
+  const placements = [];
+
+  if (n === 0) {
+    return { placements, topY: ANCHORS.pocketFlap.y };
+  }
+
+  const rowSize = RIBBON_ROW_SIZE;
+  const totalRows = Math.ceil(n / rowSize);
+  const topRowCount = n - (totalRows - 1) * rowSize;
+  const rackWidth = RIBBON_RACK.rightPct - RIBBON_RACK.leftPct;
+  const slotWidth = rackWidth / rowSize;
+
+  // Build rows top-to-bottom: row 0 (top) gets the highest-precedence
+  // ribbons (the "leftover" count so every row below it is full).
+  const rows = [];
+  let cursor = 0;
+  rows.push(chosen.slice(cursor, cursor + topRowCount));
+  cursor += topRowCount;
+  while (cursor < n) {
+    rows.push(chosen.slice(cursor, cursor + rowSize));
+    cursor += rowSize;
+  }
+
+  rows.forEach((rowItems, rowIndex) => {
+    // Bottom row's bottom edge sits exactly on the pocket top edge; rows
+    // stack upward from there with no gap between them.
+    const rowsFromBottom = rows.length - 1 - rowIndex;
+    const rowBottomY = ANCHORS.pocketFlap.y - rowsFromBottom * RIBBON_RACK.rowHeightPct;
+    const rowCenterY = rowBottomY - RIBBON_RACK.rowHeightPct / 2;
+
+    const rowContentWidth = slotWidth * rowItems.length;
+    const rowStartX = RIBBON_RACK.leftPct + (rackWidth - rowContentWidth) / 2;
+
+    rowItems.forEach((ribbon, i) => {
+      placements.push({
+        ribbon,
+        x: rowStartX + slotWidth * (i + 0.5),
+        y: rowCenterY,
+        width: slotWidth
+      });
+    });
+  });
+
+  const topY = ANCHORS.pocketFlap.y - rows.length * RIBBON_RACK.rowHeightPct;
+  return { placements, topY };
 }
 
 function renderTrackOptions() {
@@ -350,10 +479,28 @@ function setupCalibration() {
 function render() {
   updateCounts();
 
+  const rackLayer = document.getElementById("ribbon-stack");
+  rackLayer.innerHTML = "";
+  const { placements: ribbonPlacements, topY } = layoutRibbonRack();
+
+  ribbonPlacements.forEach(({ ribbon, x, y, width }) => {
+    const img = document.createElement("img");
+    img.className = "ribbon-pin";
+    img.src = `images/ribbons/${ribbon.id}.png`;
+    img.alt = ribbon.name;
+    img.title = ribbon.name;
+    img.style.left = `${x}%`;
+    img.style.top = `${y}%`;
+    img.style.width = `${width}%`;
+    img.style.height = "auto";
+    img.addEventListener("error", () => { img.style.display = "none"; });
+    rackLayer.appendChild(img);
+  });
+
   const layer = document.getElementById("badge-layer");
   layer.innerHTML = "";
 
-  const placements = assignPositions();
+  const placements = assignPositions(topY);
   placements.forEach(({ badge, x, y }) => {
     const img = document.createElement("img");
     img.className = "badge-pin";

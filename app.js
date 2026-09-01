@@ -60,19 +60,83 @@ const ANCHORS = {
 // photo. Add an entry here (any subset of ANCHORS keys) once a cord's
 // composite photo has been calibrated with "Calibrate anchors"; anything
 // not overridden falls back to the default ANCHORS above.
+// ============================================================
+// PER-CORD ALIGNMENT OVERRIDES
+// ============================================================
+// Each cord swaps in a totally different coat photo, so the pocket and
+// nametag positions calibrated for the default coat-front.png won't
+// necessarily line up. Each block below is its own independently
+// editable entry:
+//
+//   sideCenter: { pocketSide: X, nametagSide: X }
+//     Shorthand — shifts every anchor on that side to a new x, same
+//     idea as the base SIDE_CENTER above. Use this first; it's usually
+//     enough on its own.
+//
+//   Individual anchor keys (pocket / pocketFlap / pocketTop /
+//   belowNametag / aboveNametag / aviationBase), each a full
+//   { x, y, align } object — for finer per-badge control when a photo
+//   needs more than just a horizontal shift (like red, below). These
+//   always win over sideCenter for that specific anchor.
+//
+// An empty {} (or leaving a cord out entirely) just falls back to the
+// base ANCHORS untouched.
 const ANCHOR_OVERRIDES = {
-   red: {
+
+  // --- RED ----------------------------------------------------
+  red: {
     pocket: { x: 66.2, y: 40.0, align: "top" },
     pocketFlap: { x: 66.2, y: 36.4, align: "center" },
     belowNametag: { x: 30.3, y: 38.2, align: "top" },
     aboveNametag: { x: 30.3, y: 30.6, align: "bottom" }
   },
+
+  // --- BLUE ---------------------------------------------------
+  blue: {
+    // sideCenter: { pocketSide: .., nametagSide: .. },
+  },
+
+  // --- GREEN --------------------------------------------------
+  green: {
+    // sideCenter: { pocketSide: .., nametagSide: .. },
+  },
+
+  // --- WHITE --------------------------------------------------
+  white: {
+    // sideCenter: { pocketSide: .., nametagSide: .. },
+  },
+
+  // --- BLACK --------------------------------------------------
+  black: {
+    // sideCenter: { pocketSide: .., nametagSide: .. },
+  },
+
+  // --- SILVER -------------------------------------------------
+  silver: {
+    // sideCenter: { pocketSide: .., nametagSide: .. },
+  },
+
 };
 
 function getActiveAnchors() {
   const override = selectedCord ? ANCHOR_OVERRIDES[selectedCord] : null;
   if (!override) return ANCHORS;
-  return { ...ANCHORS, ...override };
+
+  let anchors = ANCHORS;
+  if (override.sideCenter) {
+    const sc = { ...SIDE_CENTER, ...override.sideCenter };
+    anchors = {
+      ...ANCHORS,
+      aviationBase: { ...ANCHORS.aviationBase, x: sc.pocketSide },
+      pocket: { ...ANCHORS.pocket, x: sc.pocketSide },
+      pocketFlap: { ...ANCHORS.pocketFlap, x: sc.pocketSide },
+      pocketTop: { ...ANCHORS.pocketTop, x: sc.pocketSide },
+      belowNametag: { ...ANCHORS.belowNametag, x: sc.nametagSide },
+      aboveNametag: { ...ANCHORS.aboveNametag, x: sc.nametagSide }
+    };
+  }
+  // Individual anchor keys in override always win over the sideCenter-derived base.
+  return { ...anchors, ...override };
 }
 
 // Fallback cord band path, as percentage-based points along the coat
@@ -115,12 +179,15 @@ const RIBBON_OVERLAP = 1.06;
 // per-badge tuning.
 const BADGE_BOX_PX = 70;
 
-const RIBBON_RACK = {
-  width: 15.6, // total rack width in % of image width, centered on SIDE_CENTER.pocketSide
-  get leftPct() { return SIDE_CENTER.pocketSide - this.width / 2; },
-  get rightPct() { return SIDE_CENTER.pocketSide + this.width / 2; },
-  aviationGapPct: null // computed below, proportional to row height (0.5in gap vs 0.375in row height)
-};
+const RIBBON_RACK_WIDTH = 15.6; // total rack width in % of image width, centered on the ACTIVE profile's pocket-side x
+
+function getRibbonRackBounds() {
+  const center = getActiveAnchors().pocket.x; // already reflects any per-cord sideCenter/override
+  return {
+    leftPct: center - RIBBON_RACK_WIDTH / 2,
+    rightPct: center + RIBBON_RACK_WIDTH / 2
+  };
+}
 
 const BADGE_IMG_DIR = "images/badges/";
 
@@ -139,7 +206,7 @@ const selectedRibbons = new Set();
 let selectedCord = null;
 let selectedTrack = null;
 
-const DATA_VERSION = 7;
+const DATA_VERSION = 8;
 
 async function init() {
   const [badgeRes, cordRes, ribbonRes] = await Promise.all([
@@ -402,12 +469,13 @@ function layoutRibbonRack() {
   const n = chosen.length;
   const placements = [];
   const pocketTopY = getActiveAnchors().pocketTop.y;
+  const rackBounds = getRibbonRackBounds();
 
   if (n === 0) {
     // No ribbons: badge sits 1/2" above the pocket top edge directly.
     // Derive that gap from a hypothetical single row's height so it's
     // consistent with the ribbon-present case, not a separate guess.
-    const rackWidth0 = RIBBON_RACK.rightPct - RIBBON_RACK.leftPct;
+    const rackWidth0 = rackBounds.rightPct - rackBounds.leftPct;
     const slotWidth0 = rackWidth0 / RIBBON_ROW_SIZE;
     const rowHeightPct0 = ((slotWidth0 / 100) * COAT_IMG.width / RIBBON_ASPECT / COAT_IMG.height) * 100;
     return { placements, topY: pocketTopY, aviationGapPct: rowHeightPct0 * (0.5 / 0.375) };
@@ -416,7 +484,7 @@ function layoutRibbonRack() {
   const rowSize = RIBBON_ROW_SIZE;
   const totalRows = Math.ceil(n / rowSize);
   const topRowCount = n - (totalRows - 1) * rowSize;
-  const rackWidth = RIBBON_RACK.rightPct - RIBBON_RACK.leftPct;
+  const rackWidth = rackBounds.rightPct - rackBounds.leftPct;
   const slotWidth = rackWidth / rowSize;
 
   // Derive row height from the ribbon image's real aspect ratio so rows
@@ -444,7 +512,7 @@ function layoutRibbonRack() {
     const rowCenterY = rowBottomY - rowHeightPct / 2;
 
     const rowContentWidth = slotWidth * rowItems.length;
-    const rowStartX = RIBBON_RACK.leftPct + (rackWidth - rowContentWidth) / 2;
+    const rowStartX = rackBounds.leftPct + (rackWidth - rowContentWidth) / 2;
 
     rowItems.forEach((ribbon, i) => {
       placements.push({

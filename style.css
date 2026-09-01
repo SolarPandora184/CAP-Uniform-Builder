@@ -304,6 +304,8 @@ body {
 
 .badge-pin {
   position: absolute;
+  /* transform is set inline per-badge in app.js based on the anchor's
+     align (top/bottom/center) — this is just a sane fallback. */
   transform: translate(-50%, -50%);
   /* width/height are set inline per-badge in app.js once each image
      loads (contain-fit within BADGE_BOX_PX using its real proportions)

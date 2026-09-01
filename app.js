@@ -26,19 +26,21 @@ const RESTRICTION_LABEL = {
 // live page to re-check these — click the real nametag/pocket corners
 // and compare against the numbers below.
 // Anchors for the DEFAULT coat image (no cord, or a cord with no per-cord
-// override below). x/y are CENTER points, calibrated by converting
-// measured edge coordinates through each badge's actual box-fit size
-// (see BADGE_BOX_PX below): pocket badge assumed = rocketry, belowNametag
-// assumed = comm_specialty, aboveNametag assumed = stem. If those
-// assumptions are wrong for what was actually tested, flag it and the
-// centers need re-deriving.
+// override below). Each anchor has an "align" telling render() which edge
+// of the badge image should sit at that y-coordinate:
+//   'top'    -> badge's top edge sits at y (use when the measured point
+//               was "top of the badge should be here")
+//   'bottom' -> badge's bottom edge sits at y
+//   'center' -> badge is centered on the point (default when nothing's
+//               been measured yet)
+// x is always the horizontal center regardless of align.
 const ANCHORS = {
-  aviationBase: { x: 67.7, y: 27 },   // first aviation badge, above the ribbon rack (which sits above the pocket)
-  aviationStep: 5,                     // vertical spacing (in % of image height) between stacked aviation badges
-  pocket: { x: 66.4, y: 42.96 },       // wearer's left welt pocket — rocketry fixed here
-  pocketFlap: { x: 67.7, y: 34 },      // top edge of that pocket — NRA marksmanship fixed here
-  belowNametag: { x: 30.7, y: 40.96 }, // wearer's right, 1.5" below nametag
-  aboveNametag: { x: 30.1, y: 28.76 }  // centered over the nametag, 0.5" above it
+  aviationBase: { x: 67.7, y: 27, align: "center" },  // first aviation badge, above the ribbon rack
+  aviationStep: 5,                                     // vertical spacing (in % of image height) between stacked aviation badges
+  pocket: { x: 66.4, y: 40.5, align: "top" },           // wearer's left welt pocket — rocketry fixed here
+  pocketFlap: { x: 67.7, y: 34, align: "center" },      // top edge of that pocket — NRA marksmanship fixed here
+  belowNametag: { x: 30.7, y: 38.5, align: "top" },     // wearer's right, 1.5" below nametag
+  aboveNametag: { x: 30.1, y: 30.9, align: "bottom" }   // centered over the nametag, 0.5" above it
 };
 
 // Per-cord anchor overrides. Selecting a cord swaps in a whole new coat
@@ -48,7 +50,7 @@ const ANCHORS = {
 // composite photo has been calibrated with "Calibrate anchors"; anything
 // not overridden falls back to the default ANCHORS above.
 const ANCHOR_OVERRIDES = {
-  // red:   { pocket: { x: .., y: .. }, belowNametag: { x: .., y: .. } },
+  // red:   { pocket: { x: .., y: .., align: "top" }, belowNametag: { x: .., y: .., align: "top" } },
   // blue:  { ... },
 };
 
@@ -121,7 +123,7 @@ const selectedRibbons = new Set();
 let selectedCord = null;
 let selectedTrack = null;
 
-const DATA_VERSION = 4;
+const DATA_VERSION = 5;
 
 async function init() {
   const [badgeRes, cordRes, ribbonRes] = await Promise.all([
@@ -268,7 +270,8 @@ function assignPositions(ribbonTopY, aviationGapPct) {
     placements.push({
       badge: b,
       x: anchors.aviationBase.x,
-      y: aviationBaseY - i * anchors.aviationStep
+      y: aviationBaseY - i * anchors.aviationStep,
+      align: anchors.aviationBase.align
     });
   });
 
@@ -289,7 +292,7 @@ function assignPositions(ribbonTopY, aviationGapPct) {
 
   queueable.forEach((b, i) => {
     const slot = slotOrder[i];
-    if (slot) placements.push({ badge: b, x: slot.x, y: slot.y });
+    if (slot) placements.push({ badge: b, x: slot.x, y: slot.y, align: slot.align });
   });
 
   return placements;
@@ -580,13 +583,16 @@ function render() {
   layer.innerHTML = "";
 
   const placements = assignPositions(topY, aviationGapPct);
-  placements.forEach(({ badge, x, y }) => {
+  placements.forEach(({ badge, x, y, align }) => {
     const img = document.createElement("img");
     img.className = "badge-pin";
     img.alt = badge.name;
     img.title = badge.name;
     img.style.left = `${x}%`;
     img.style.top = `${y}%`;
+    img.style.transform = align === "top" ? "translate(-50%, 0%)"
+      : align === "bottom" ? "translate(-50%, -100%)"
+      : "translate(-50%, -50%)"; // default: centered on the point
     img.addEventListener("error", () => { img.style.display = "none"; });
     img.addEventListener("load", () => {
       // Contain-fit within BADGE_BOX_PX using the image's real proportions,

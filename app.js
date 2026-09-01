@@ -25,14 +25,38 @@ const RESTRICTION_LABEL = {
 // If you replace coat-front.png again, use "Calibrate anchors" on the
 // live page to re-check these — click the real nametag/pocket corners
 // and compare against the numbers below.
+// Anchors for the DEFAULT coat image (no cord, or a cord with no per-cord
+// override below). x/y are CENTER points, calibrated by converting
+// measured edge coordinates through each badge's actual box-fit size
+// (see BADGE_BOX_PX below): pocket badge assumed = rocketry, belowNametag
+// assumed = comm_specialty, aboveNametag assumed = stem. If those
+// assumptions are wrong for what was actually tested, flag it and the
+// centers need re-deriving.
 const ANCHORS = {
   aviationBase: { x: 67.7, y: 27 },   // first aviation badge, above the ribbon rack (which sits above the pocket)
   aviationStep: 5,                     // vertical spacing (in % of image height) between stacked aviation badges
-  pocket: { x: 67.7, y: 36 },          // wearer's left welt pocket — rocketry fixed here
+  pocket: { x: 66.4, y: 42.96 },       // wearer's left welt pocket — rocketry fixed here
   pocketFlap: { x: 67.7, y: 34 },      // top edge of that pocket — NRA marksmanship fixed here
-  belowNametag: { x: 31, y: 40 },      // wearer's right, 1.5" below nametag
-  aboveNametag: { x: 31, y: 29 }       // centered over the nametag, 0.5" above it
+  belowNametag: { x: 30.7, y: 40.96 }, // wearer's right, 1.5" below nametag
+  aboveNametag: { x: 30.1, y: 28.76 }  // centered over the nametag, 0.5" above it
 };
+
+// Per-cord anchor overrides. Selecting a cord swaps in a whole new coat
+// photo (different framing/resolution than the base illustration), so
+// the pocket/nametag positions above won't necessarily line up on that
+// photo. Add an entry here (any subset of ANCHORS keys) once a cord's
+// composite photo has been calibrated with "Calibrate anchors"; anything
+// not overridden falls back to the default ANCHORS above.
+const ANCHOR_OVERRIDES = {
+  // red:   { pocket: { x: .., y: .. }, belowNametag: { x: .., y: .. } },
+  // blue:  { ... },
+};
+
+function getActiveAnchors() {
+  const override = selectedCord ? ANCHOR_OVERRIDES[selectedCord] : null;
+  if (!override) return ANCHORS;
+  return { ...ANCHORS, ...override };
+}
 
 // Fallback cord band path, as percentage-based points along the coat
 // (used only if a real coat+cord photo hasn't been uploaded for the
@@ -65,6 +89,15 @@ const RIBBON_ASPECT = 100 / 30; // width:height of the ribbon PNGs in images/rib
 // is perfect. The extra overlap is small enough to be invisible.
 const RIBBON_OVERLAP = 1.06;
 
+// Badges vary wildly in natural shape (rocketry is a tall thin pin,
+// sUAS wings are wide and flat, STEM is roughly square), so instead of
+// forcing one fixed width or height, each badge is scaled to fit inside
+// a fixed pixel box (like CSS object-fit: contain) while preserving its
+// own proportions. Sized via each image's actual naturalWidth/Height
+// once loaded, so it works for any future badge image without needing
+// per-badge tuning.
+const BADGE_BOX_PX = 70;
+
 const RIBBON_RACK = {
   leftPct: 59.9,
   rightPct: 75.5,
@@ -88,7 +121,7 @@ const selectedRibbons = new Set();
 let selectedCord = null;
 let selectedTrack = null;
 
-const DATA_VERSION = 3;
+const DATA_VERSION = 4;
 
 async function init() {
   const [badgeRes, cordRes, ribbonRes] = await Promise.all([
@@ -226,6 +259,7 @@ function updateCounts() {
 function assignPositions(ribbonTopY, aviationGapPct) {
   const chosen = [...selected].map(id => findBadge(id));
   const placements = [];
+  const anchors = getActiveAnchors();
 
   // Aviation/occupational badges: stack upward from the base anchor, in selection order.
   const aviationBaseY = ribbonTopY - aviationGapPct;
@@ -233,8 +267,8 @@ function assignPositions(ribbonTopY, aviationGapPct) {
   aviation.forEach((b, i) => {
     placements.push({
       badge: b,
-      x: ANCHORS.aviationBase.x,
-      y: aviationBaseY - i * ANCHORS.aviationStep
+      x: anchors.aviationBase.x,
+      y: aviationBaseY - i * anchors.aviationStep
     });
   });
 
@@ -246,12 +280,12 @@ function assignPositions(ribbonTopY, aviationGapPct) {
   const marksmanship = specialty.find(b => b.fixedSlot === "pocket_flap");
   const queueable = specialty.filter(b => !b.fixedSlot);
 
-  if (rocketry) placements.push({ badge: rocketry, ...ANCHORS.pocket });
-  if (marksmanship) placements.push({ badge: marksmanship, ...ANCHORS.pocketFlap });
+  if (rocketry) placements.push({ badge: rocketry, ...anchors.pocket });
+  if (marksmanship) placements.push({ badge: marksmanship, ...anchors.pocketFlap });
 
   const slotOrder = rocketry
-    ? [ANCHORS.belowNametag, ANCHORS.aboveNametag]
-    : [ANCHORS.pocket, ANCHORS.belowNametag, ANCHORS.aboveNametag];
+    ? [anchors.belowNametag, anchors.aboveNametag]
+    : [anchors.pocket, anchors.belowNametag, anchors.aboveNametag];
 
   queueable.forEach((b, i) => {
     const slot = slotOrder[i];
@@ -322,6 +356,7 @@ function layoutRibbonRack() {
 
   const n = chosen.length;
   const placements = [];
+  const pocketFlapY = getActiveAnchors().pocketFlap.y;
 
   if (n === 0) {
     // No ribbons: badge sits 1/2" above the pocket top edge directly.
@@ -330,7 +365,7 @@ function layoutRibbonRack() {
     const rackWidth0 = RIBBON_RACK.rightPct - RIBBON_RACK.leftPct;
     const slotWidth0 = rackWidth0 / RIBBON_ROW_SIZE;
     const rowHeightPct0 = ((slotWidth0 / 100) * COAT_IMG.width / RIBBON_ASPECT / COAT_IMG.height) * 100;
-    return { placements, topY: ANCHORS.pocketFlap.y, aviationGapPct: rowHeightPct0 * (0.5 / 0.375) };
+    return { placements, topY: pocketFlapY, aviationGapPct: rowHeightPct0 * (0.5 / 0.375) };
   }
 
   const rowSize = RIBBON_ROW_SIZE;
@@ -360,7 +395,7 @@ function layoutRibbonRack() {
     // Bottom row's bottom edge sits exactly on the pocket top edge; rows
     // stack upward from there with no gap between them.
     const rowsFromBottom = rows.length - 1 - rowIndex;
-    const rowBottomY = ANCHORS.pocketFlap.y - rowsFromBottom * rowHeightPct;
+    const rowBottomY = pocketFlapY - rowsFromBottom * rowHeightPct;
     const rowCenterY = rowBottomY - rowHeightPct / 2;
 
     const rowContentWidth = slotWidth * rowItems.length;
@@ -381,7 +416,7 @@ function layoutRibbonRack() {
   // is 3/8" tall and the badge sits 1/2" above the stack, so the gap is
   // row height scaled by (0.5 / 0.375).
   const aviationGapPct = rowHeightPct * (0.5 / 0.375);
-  const topY = ANCHORS.pocketFlap.y - rows.length * rowHeightPct;
+  const topY = pocketFlapY - rows.length * rowHeightPct;
   return { placements, topY, aviationGapPct };
 }
 
@@ -548,13 +583,21 @@ function render() {
   placements.forEach(({ badge, x, y }) => {
     const img = document.createElement("img");
     img.className = "badge-pin";
-    img.src = `${BADGE_IMG_DIR}${badge.id}.png`;
     img.alt = badge.name;
     img.title = badge.name;
     img.style.left = `${x}%`;
     img.style.top = `${y}%`;
-    // If a badge PNG hasn't been uploaded yet, don't leave a broken-image icon.
     img.addEventListener("error", () => { img.style.display = "none"; });
+    img.addEventListener("load", () => {
+      // Contain-fit within BADGE_BOX_PX using the image's real proportions,
+      // then convert to % of the coat image so sizing stays viewport-independent.
+      const scale = Math.min(BADGE_BOX_PX / img.naturalWidth, BADGE_BOX_PX / img.naturalHeight);
+      const renderedWidthPx = img.naturalWidth * scale;
+      const renderedHeightPx = img.naturalHeight * scale;
+      img.style.width = `${(renderedWidthPx / COAT_IMG.width) * 100}%`;
+      img.style.height = `${(renderedHeightPx / COAT_IMG.height) * 100}%`;
+    });
+    img.src = `${BADGE_IMG_DIR}${badge.id}.png`;
     layer.appendChild(img);
   });
 }

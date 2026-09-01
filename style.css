@@ -305,9 +305,9 @@ body {
 .badge-pin {
   position: absolute;
   transform: translate(-50%, -50%);
-  width: var(--badge-size, 64px);
-  height: var(--badge-size, 64px);
-  object-fit: contain;
+  /* width/height are set inline per-badge in app.js once each image
+     loads (contain-fit within BADGE_BOX_PX using its real proportions)
+     — no fixed fallback needed here. */
   filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5));
 }
 

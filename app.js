@@ -50,8 +50,12 @@ const ANCHORS = {
 // composite photo has been calibrated with "Calibrate anchors"; anything
 // not overridden falls back to the default ANCHORS above.
 const ANCHOR_OVERRIDES = {
-  // red:   { pocket: { x: .., y: .., align: "top" }, belowNametag: { x: .., y: .., align: "top" } },
-  // blue:  { ... },
+   red: {
+    pocket: { x: 66.2, y: 40.0, align: "top" },
+    pocketFlap: { x: 66.2, y: 36.4, align: "center" },
+    belowNametag: { x: 30.3, y: 38.2, align: "top" },
+    aboveNametag: { x: 30.3, y: 3.6, align: "bottom" }
+  },
 };
 
 function getActiveAnchors() {

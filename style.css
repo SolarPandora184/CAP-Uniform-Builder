@@ -118,6 +118,34 @@ body {
   border-color: var(--gold);
 }
 
+.row-size-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-dim);
+  margin: 6px 0;
+}
+
+.row-size-btn {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  width: 28px;
+  height: 26px;
+  border-radius: 3px;
+  border: 1px solid var(--panel-line);
+  background: var(--panel);
+  color: var(--text-dim);
+  cursor: pointer;
+}
+
+.row-size-btn.active {
+  border-color: var(--gold);
+  color: var(--gold);
+  background: rgba(200, 169, 81, 0.1);
+}
+
 #ribbon-checklist {
   max-height: 360px;
   overflow-y: auto;

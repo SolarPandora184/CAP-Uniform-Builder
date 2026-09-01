@@ -51,11 +51,18 @@ const CORD_PATH = [
 // "centered above the pocket between the left and right pocket edges."
 // The bottom row's bottom edge sits exactly on ANCHORS.pocketFlap.y
 // ("resting on, but not over, top edge of left welt or pocket").
+//
+// Row height isn't a guessed constant — it's derived below from the
+// actual ribbon PNGs' aspect ratio (100x30, i.e. 10:3) so that stacked
+// rows touch exactly with zero gap, matching "There will be no space
+// between the rows of ribbons" (CAPR 39-1 11.2.7/11.3.3).
+const COAT_IMG = { width: 1106, height: 1422 }; // must match images/coat-front.png's actual pixel size
+const RIBBON_ASPECT = 100 / 30; // width:height of the ribbon PNGs in images/ribbons/
+
 const RIBBON_RACK = {
   leftPct: 59.9,
   rightPct: 75.5,
-  rowHeightPct: 2.4,     // tune with "Calibrate anchors" if rows look too tall/short
-  aviationGapPct: 3.2    // gap between top ribbon row (or pocket, if none) and the first aviation badge
+  aviationGapPct: null // computed below, proportional to row height (0.5in gap vs 0.375in row height)
 };
 
 const BADGE_IMG_DIR = "images/badges/";
@@ -94,8 +101,20 @@ async function init() {
   renderCordOptions();
   renderTrackOptions();
   renderRibbonChecklist();
+  setupRowSizeToggle();
   setupCalibration();
   render();
+}
+
+function setupRowSizeToggle() {
+  const buttons = document.querySelectorAll(".row-size-btn");
+  buttons.forEach(btn => {
+    btn.addEventListener("click", () => {
+      RIBBON_ROW_SIZE = parseInt(btn.dataset.size, 10);
+      buttons.forEach(b => b.classList.toggle("active", b === btn));
+      render();
+    });
+  });
 }
 
 function renderChecklist() {
@@ -196,12 +215,12 @@ function updateCounts() {
   document.getElementById("count-aviation").textContent = `Aviation/Occ ${aviation} / ${LIMITS.aviationOccupationalMax}`;
 }
 
-function assignPositions(ribbonTopY) {
+function assignPositions(ribbonTopY, aviationGapPct) {
   const chosen = [...selected].map(id => findBadge(id));
   const placements = [];
 
   // Aviation/occupational badges: stack upward from the base anchor, in selection order.
-  const aviationBaseY = ribbonTopY - RIBBON_RACK.aviationGapPct;
+  const aviationBaseY = ribbonTopY - aviationGapPct;
   const aviation = chosen.filter(b => b.category === "aviation_occupational");
   aviation.forEach((b, i) => {
     placements.push({
@@ -297,7 +316,13 @@ function layoutRibbonRack() {
   const placements = [];
 
   if (n === 0) {
-    return { placements, topY: ANCHORS.pocketFlap.y };
+    // No ribbons: badge sits 1/2" above the pocket top edge directly.
+    // Derive that gap from a hypothetical single row's height so it's
+    // consistent with the ribbon-present case, not a separate guess.
+    const rackWidth0 = RIBBON_RACK.rightPct - RIBBON_RACK.leftPct;
+    const slotWidth0 = rackWidth0 / RIBBON_ROW_SIZE;
+    const rowHeightPct0 = ((slotWidth0 / 100) * COAT_IMG.width / RIBBON_ASPECT / COAT_IMG.height) * 100;
+    return { placements, topY: ANCHORS.pocketFlap.y, aviationGapPct: rowHeightPct0 * (0.5 / 0.375) };
   }
 
   const rowSize = RIBBON_ROW_SIZE;
@@ -305,6 +330,12 @@ function layoutRibbonRack() {
   const topRowCount = n - (totalRows - 1) * rowSize;
   const rackWidth = RIBBON_RACK.rightPct - RIBBON_RACK.leftPct;
   const slotWidth = rackWidth / rowSize;
+
+  // Derive row height from the ribbon image's real aspect ratio so rows
+  // touch with zero gap, rather than guessing a percentage.
+  const slotWidthPx = (slotWidth / 100) * COAT_IMG.width;
+  const rowHeightPx = slotWidthPx / RIBBON_ASPECT;
+  const rowHeightPct = (rowHeightPx / COAT_IMG.height) * 100;
 
   // Build rows top-to-bottom: row 0 (top) gets the highest-precedence
   // ribbons (the "leftover" count so every row below it is full).
@@ -321,8 +352,8 @@ function layoutRibbonRack() {
     // Bottom row's bottom edge sits exactly on the pocket top edge; rows
     // stack upward from there with no gap between them.
     const rowsFromBottom = rows.length - 1 - rowIndex;
-    const rowBottomY = ANCHORS.pocketFlap.y - rowsFromBottom * RIBBON_RACK.rowHeightPct;
-    const rowCenterY = rowBottomY - RIBBON_RACK.rowHeightPct / 2;
+    const rowBottomY = ANCHORS.pocketFlap.y - rowsFromBottom * rowHeightPct;
+    const rowCenterY = rowBottomY - rowHeightPct / 2;
 
     const rowContentWidth = slotWidth * rowItems.length;
     const rowStartX = RIBBON_RACK.leftPct + (rackWidth - rowContentWidth) / 2;
@@ -337,8 +368,12 @@ function layoutRibbonRack() {
     });
   });
 
-  const topY = ANCHORS.pocketFlap.y - rows.length * RIBBON_RACK.rowHeightPct;
-  return { placements, topY };
+  // Aviation badge gap is proportional to row height: a real ribbon row
+  // is 3/8" tall and the badge sits 1/2" above the stack, so the gap is
+  // row height scaled by (0.5 / 0.375).
+  const aviationGapPct = rowHeightPct * (0.5 / 0.375);
+  const topY = ANCHORS.pocketFlap.y - rows.length * rowHeightPct;
+  return { placements, topY, aviationGapPct };
 }
 
 function renderTrackOptions() {
@@ -481,7 +516,7 @@ function render() {
 
   const rackLayer = document.getElementById("ribbon-stack");
   rackLayer.innerHTML = "";
-  const { placements: ribbonPlacements, topY } = layoutRibbonRack();
+  const { placements: ribbonPlacements, topY, aviationGapPct } = layoutRibbonRack();
 
   ribbonPlacements.forEach(({ ribbon, x, y, width }) => {
     const img = document.createElement("img");
@@ -500,7 +535,7 @@ function render() {
   const layer = document.getElementById("badge-layer");
   layer.innerHTML = "";
 
-  const placements = assignPositions(topY);
+  const placements = assignPositions(topY, aviationGapPct);
   placements.forEach(({ badge, x, y }) => {
     const img = document.createElement("img");
     img.className = "badge-pin";

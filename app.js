@@ -65,7 +65,7 @@ const ANCHOR_OVERRIDES = {
     pocket: { x: 66.2, y: 40.0, align: "top" },
     pocketFlap: { x: 66.2, y: 36.4, align: "center" },
     belowNametag: { x: 30.3, y: 38.2, align: "top" },
-    aboveNametag: { x: 30.3, y: 3.6, align: "bottom" }
+    aboveNametag: { x: 30.3, y: 30.6, align: "bottom" }
   },
 };
 

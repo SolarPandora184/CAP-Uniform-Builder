@@ -58,6 +58,12 @@ const CORD_PATH = [
 // between the rows of ribbons" (CAPR 39-1 11.2.7/11.3.3).
 const COAT_IMG = { width: 1106, height: 1422 }; // must match images/coat-front.png's actual pixel size
 const RIBBON_ASPECT = 100 / 30; // width:height of the ribbon PNGs in images/ribbons/
+// Rendered ribbon height is nudged slightly taller than the exact
+// mathematical row spacing so adjacent rows overlap by a hair instead of
+// touching exactly — guards against a 1px seam from browser sub-pixel
+// rounding, which can otherwise show as a thin gap even when the math
+// is perfect. The extra overlap is small enough to be invisible.
+const RIBBON_OVERLAP = 1.06;
 
 const RIBBON_RACK = {
   leftPct: 59.9,
@@ -82,11 +88,13 @@ const selectedRibbons = new Set();
 let selectedCord = null;
 let selectedTrack = null;
 
+const DATA_VERSION = 3;
+
 async function init() {
   const [badgeRes, cordRes, ribbonRes] = await Promise.all([
-    fetch("badges.json"),
-    fetch("cords.json"),
-    fetch("ribbons.json")
+    fetch(`badges.json?v=${DATA_VERSION}`),
+    fetch(`cords.json?v=${DATA_VERSION}`),
+    fetch(`ribbons.json?v=${DATA_VERSION}`)
   ]);
   const data = await badgeRes.json();
   const cordData = await cordRes.json();
@@ -363,7 +371,8 @@ function layoutRibbonRack() {
         ribbon,
         x: rowStartX + slotWidth * (i + 0.5),
         y: rowCenterY,
-        width: slotWidth
+        width: slotWidth,
+        height: rowHeightPct
       });
     });
   });
@@ -518,7 +527,7 @@ function render() {
   rackLayer.innerHTML = "";
   const { placements: ribbonPlacements, topY, aviationGapPct } = layoutRibbonRack();
 
-  ribbonPlacements.forEach(({ ribbon, x, y, width }) => {
+  ribbonPlacements.forEach(({ ribbon, x, y, width, height }) => {
     const img = document.createElement("img");
     img.className = "ribbon-pin";
     img.src = `images/ribbons/${ribbon.id}.png`;
@@ -527,7 +536,7 @@ function render() {
     img.style.left = `${x}%`;
     img.style.top = `${y}%`;
     img.style.width = `${width}%`;
-    img.style.height = "auto";
+    img.style.height = `${height * RIBBON_OVERLAP}%`;
     img.addEventListener("error", () => { img.style.display = "none"; });
     rackLayer.appendChild(img);
   });

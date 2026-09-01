@@ -314,8 +314,8 @@ body {
 .ribbon-pin {
   position: absolute;
   transform: translate(-50%, -50%);
-  height: var(--ribbon-height, 20px);
-  width: auto;
+  /* width/height are set inline per-ribbon in app.js (from real image
+     proportions plus a small overlap factor) — no fallback needed here. */
 }
 
 .stage-caption {

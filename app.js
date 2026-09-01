@@ -35,12 +35,13 @@ const RESTRICTION_LABEL = {
 //               been measured yet)
 // x is always the horizontal center regardless of align.
 const ANCHORS = {
-  aviationBase: { x: 67.7, y: 27, align: "center" },  // first aviation badge, above the ribbon rack
-  aviationStep: 5,                                     // vertical spacing (in % of image height) between stacked aviation badges
-  pocket: { x: 66.4, y: 40.5, align: "top" },           // wearer's left welt pocket — rocketry fixed here
-  pocketFlap: { x: 67.7, y: 34, align: "center" },      // top edge of that pocket — NRA marksmanship fixed here
-  belowNametag: { x: 30.7, y: 38.5, align: "top" },     // wearer's right, 1.5" below nametag
-  aboveNametag: { x: 30.1, y: 30.9, align: "bottom" }   // centered over the nametag, 0.5" above it
+  aviationBase: { x: 67.7, y: 27, align: "center" },     // first aviation badge, above the ribbon rack
+  aviationStep: 5,                                        // vertical spacing (in % of image height) between stacked aviation badges
+  pocket: { x: 67.6, y: 39.4, align: "top" },              // wearer's left welt pocket — rocketry (or first queued specialty badge) fixed here, top edge
+  pocketFlap: { x: 67.6, y: 36.0, align: "center" },       // pocket CENTER — NRA marksmanship centered here
+  pocketTop: { x: 67.6, y: 34.2, align: "top" },           // top edge of the pocket — ribbon rack's bottom row rests here (not yet re-measured; carried over from earlier crop-based estimate, consistent with the new 36.0 center)
+  belowNametag: { x: 30.9, y: 37.5, align: "top" },        // wearer's right, 1.5" below nametag, top edge
+  aboveNametag: { x: 30.9, y: 32.0, align: "bottom" }      // centered over the nametag, 0.5" above it, bottom edge
 };
 
 // Per-cord anchor overrides. Selecting a cord swaps in a whole new coat
@@ -79,7 +80,7 @@ const CORD_PATH = [
 // Rack width matches the wearer's-left welt pocket edges (measured from
 // images/coat-front.png), per CAPR 39-1 11.2.7: rows of three are
 // "centered above the pocket between the left and right pocket edges."
-// The bottom row's bottom edge sits exactly on ANCHORS.pocketFlap.y
+// The bottom row's bottom edge sits exactly on ANCHORS.pocketTop.y
 // ("resting on, but not over, top edge of left welt or pocket").
 //
 // Row height isn't a guessed constant — it's derived below from the
@@ -127,7 +128,7 @@ const selectedRibbons = new Set();
 let selectedCord = null;
 let selectedTrack = null;
 
-const DATA_VERSION = 5;
+const DATA_VERSION = 6;
 
 async function init() {
   const [badgeRes, cordRes, ribbonRes] = await Promise.all([
@@ -218,6 +219,27 @@ function renderChecklist() {
   }
 }
 
+// Rocketry (fixedSlot "pocket") always claims the pocket slot, which
+// leaves only 2 open slots (below/above nametag) for other non-fixed
+// specialty badges instead of 3. Adding a badge that would push the
+// queueable count past whatever's available — in either direction,
+// whether the new badge IS rocketry or one of the queueable ones —
+// silently dropped one before; this catches it up front instead.
+function wouldOverflowSpecialtySlots(newId) {
+  const hypothetical = new Set(selected);
+  hypothetical.add(newId);
+  const hasRocketry = [...hypothetical].some(id => {
+    const b = findBadge(id);
+    return b && b.fixedSlot === "pocket";
+  });
+  const queueableCount = [...hypothetical].filter(id => {
+    const b = findBadge(id);
+    return b && b.category === "specialty" && !b.fixedSlot;
+  }).length;
+  const availableSlots = hasRocketry ? 2 : 3;
+  return queueableCount > availableSlots;
+}
+
 function toggle(id, checkbox) {
   const badge = findBadge(id);
   const willSelect = checkbox.checked;
@@ -236,6 +258,11 @@ function toggle(id, checkbox) {
     if (badge.category === "aviation_occupational" && aviationCount >= LIMITS.aviationOccupationalMax) {
       checkbox.checked = false;
       flashLimit("count-aviation");
+      return;
+    }
+    if (badge.category === "specialty" && wouldOverflowSpecialtySlots(id)) {
+      checkbox.checked = false;
+      flashLimit("count-total");
       return;
     }
     selected.add(id);
@@ -363,7 +390,7 @@ function layoutRibbonRack() {
 
   const n = chosen.length;
   const placements = [];
-  const pocketFlapY = getActiveAnchors().pocketFlap.y;
+  const pocketTopY = getActiveAnchors().pocketTop.y;
 
   if (n === 0) {
     // No ribbons: badge sits 1/2" above the pocket top edge directly.
@@ -372,7 +399,7 @@ function layoutRibbonRack() {
     const rackWidth0 = RIBBON_RACK.rightPct - RIBBON_RACK.leftPct;
     const slotWidth0 = rackWidth0 / RIBBON_ROW_SIZE;
     const rowHeightPct0 = ((slotWidth0 / 100) * COAT_IMG.width / RIBBON_ASPECT / COAT_IMG.height) * 100;
-    return { placements, topY: pocketFlapY, aviationGapPct: rowHeightPct0 * (0.5 / 0.375) };
+    return { placements, topY: pocketTopY, aviationGapPct: rowHeightPct0 * (0.5 / 0.375) };
   }
 
   const rowSize = RIBBON_ROW_SIZE;
@@ -402,7 +429,7 @@ function layoutRibbonRack() {
     // Bottom row's bottom edge sits exactly on the pocket top edge; rows
     // stack upward from there with no gap between them.
     const rowsFromBottom = rows.length - 1 - rowIndex;
-    const rowBottomY = pocketFlapY - rowsFromBottom * rowHeightPct;
+    const rowBottomY = pocketTopY - rowsFromBottom * rowHeightPct;
     const rowCenterY = rowBottomY - rowHeightPct / 2;
 
     const rowContentWidth = slotWidth * rowItems.length;
@@ -423,7 +450,7 @@ function layoutRibbonRack() {
   // is 3/8" tall and the badge sits 1/2" above the stack, so the gap is
   // row height scaled by (0.5 / 0.375).
   const aviationGapPct = rowHeightPct * (0.5 / 0.375);
-  const topY = pocketFlapY - rows.length * rowHeightPct;
+  const topY = pocketTopY - rows.length * rowHeightPct;
   return { placements, topY, aviationGapPct };
 }
 
@@ -451,6 +478,22 @@ function renderTrackOptions() {
       const totalExcludingOldTrack = [...selected].filter(id => id !== selectedTrack).length;
 
       if (totalExcludingOldTrack >= LIMITS.totalMax) {
+        select.value = selectedTrack || "";
+        flashLimit("count-total");
+        return;
+      }
+
+      const withoutOldTrack = new Set(selected);
+      if (selectedTrack) withoutOldTrack.delete(selectedTrack);
+      const hasRocketry = [...withoutOldTrack, newId].some(id => {
+        const b = findBadge(id);
+        return b && b.fixedSlot === "pocket";
+      });
+      const queueableCount = [...withoutOldTrack, newId].filter(id => {
+        const b = findBadge(id);
+        return b && b.category === "specialty" && !b.fixedSlot;
+      }).length;
+      if (queueableCount > (hasRocketry ? 2 : 3)) {
         select.value = selectedTrack || "";
         flashLimit("count-total");
         return;
@@ -588,6 +631,16 @@ function render() {
 
   const placements = assignPositions(topY, aviationGapPct);
   placements.forEach(({ badge, x, y, align }) => {
+    // Safety net: "top: undefined%" / "top: NaN%" is invalid CSS and gets
+    // silently ignored by the browser, which makes position:absolute
+    // elements fall back to the top-left of their container — exactly
+    // the "badge flies to the top of the screen" symptom. Skip instead
+    // of rendering somewhere wrong, and log it so it's traceable.
+    if (!Number.isFinite(x) || !Number.isFinite(y)) {
+      console.warn(`Skipping "${badge.name}" — invalid position (x=${x}, y=${y}). Check ANCHORS / ANCHOR_OVERRIDES for a missing or malformed entry.`);
+      return;
+    }
+
     const img = document.createElement("img");
     img.className = "badge-pin";
     img.alt = badge.name;

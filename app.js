@@ -34,14 +34,24 @@ const RESTRICTION_LABEL = {
 //   'center' -> badge is centered on the point (default when nothing's
 //               been measured yet)
 // x is always the horizontal center regardless of align.
+// Single center-line per side, in % of image width. Every anchor and the
+// ribbon rack on that side derives its x from here, so they can't drift
+// out of alignment with each other (they previously could — aviationBase
+// was still at 67.7 while everything else had moved to 67.6). Adjust
+// these two numbers to shift an entire side at once.
+const SIDE_CENTER = {
+  pocketSide: 67.6,   // wearer's left: ribbon rack, pocket, rocketry, aviation badges — image-right
+  nametagSide: 30.9   // wearer's right: nametag, below/above-nametag badges — image-left
+};
+
 const ANCHORS = {
-  aviationBase: { x: 67.7, y: 27, align: "center" },     // first aviation badge, above the ribbon rack
-  aviationStep: 5,                                        // vertical spacing (in % of image height) between stacked aviation badges
-  pocket: { x: 67.6, y: 39.4, align: "top" },              // wearer's left welt pocket — rocketry (or first queued specialty badge) fixed here, top edge
-  pocketFlap: { x: 67.6, y: 36.0, align: "center" },       // pocket CENTER — NRA marksmanship centered here
-  pocketTop: { x: 67.6, y: 34.2, align: "top" },           // top edge of the pocket — ribbon rack's bottom row rests here (not yet re-measured; carried over from earlier crop-based estimate, consistent with the new 36.0 center)
-  belowNametag: { x: 30.9, y: 37.5, align: "top" },        // wearer's right, 1.5" below nametag, top edge
-  aboveNametag: { x: 30.9, y: 32.0, align: "bottom" }      // centered over the nametag, 0.5" above it, bottom edge
+  aviationBase: { x: SIDE_CENTER.pocketSide, y: 27, align: "center" },     // first aviation badge, above the ribbon rack
+  aviationStep: 5,                                                          // vertical spacing (in % of image height) between stacked aviation badges
+  pocket: { x: SIDE_CENTER.pocketSide, y: 39.4, align: "top" },             // wearer's left welt pocket — rocketry (or first queued specialty badge) fixed here, top edge
+  pocketFlap: { x: SIDE_CENTER.pocketSide, y: 36.0, align: "center" },      // pocket CENTER — NRA marksmanship centered here
+  pocketTop: { x: SIDE_CENTER.pocketSide, y: 34.2, align: "top" },          // top edge of the pocket — ribbon rack's bottom row rests here (not yet re-measured; carried over from earlier crop-based estimate, consistent with the new 36.0 center)
+  belowNametag: { x: SIDE_CENTER.nametagSide, y: 37.5, align: "top" },      // wearer's right, 1.5" below nametag, top edge
+  aboveNametag: { x: SIDE_CENTER.nametagSide, y: 32.0, align: "bottom" }    // centered over the nametag, 0.5" above it, bottom edge
 };
 
 // Per-cord anchor overrides. Selecting a cord swaps in a whole new coat
@@ -106,8 +116,9 @@ const RIBBON_OVERLAP = 1.06;
 const BADGE_BOX_PX = 70;
 
 const RIBBON_RACK = {
-  leftPct: 59.9,
-  rightPct: 75.5,
+  width: 15.6, // total rack width in % of image width, centered on SIDE_CENTER.pocketSide
+  get leftPct() { return SIDE_CENTER.pocketSide - this.width / 2; },
+  get rightPct() { return SIDE_CENTER.pocketSide + this.width / 2; },
   aviationGapPct: null // computed below, proportional to row height (0.5in gap vs 0.375in row height)
 };
 
@@ -128,7 +139,7 @@ const selectedRibbons = new Set();
 let selectedCord = null;
 let selectedTrack = null;
 
-const DATA_VERSION = 6;
+const DATA_VERSION = 7;
 
 async function init() {
   const [badgeRes, cordRes, ribbonRes] = await Promise.all([

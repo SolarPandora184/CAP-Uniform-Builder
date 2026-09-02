@@ -34,11 +34,11 @@ const RESTRICTION_LABEL = {
 // click "Calibrate anchors", click the described point, and paste the
 // x/y readout straight into that field.
 const ANCHORS = {
-  pocket:       { x: 67.6, y: 39.4, align: "top" },      // TOP edge of the pocket-slot badge (rocketry, or first queued specialty badge)
-  pocketFlap:   { x: 67.6, y: 35.2, align: "top" },   // CENTER of the pocket itself (NRA Marksmanship badge)
-  pocketTop:    { x: 67.6, y: 34.2, align: "top" },      // TOP edge of the pocket (ribbon rack's bottom row rests exactly here)
-  belowNametag: { x: 30.9, y: 37.5, align: "top" },      // TOP edge of the badge below the nameplate
-  aboveNametag: { x: 30.9, y: 32.0, align: "bottom" }    // BOTTOM edge of the badge above the nameplate
+pocketTop:    { x: 67.6, y: 34.4, align: "top" },
+pocketFlap:   { x: 67.6, y: 36, align: "center" },
+pocket:       { x: 67.6, y: 40.2, align: "top" },
+belowNametag: { x: 31.2, y: 41.3, align: "top" },
+aboveNametag: { x: 31.2, y: 30.6, align: "bottom" },
 };
 
 // Vertical spacing (% of image height) between stacked aviation badges.

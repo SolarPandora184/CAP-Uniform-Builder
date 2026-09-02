@@ -1,0 +1,167 @@
+# Rules for All AI Assistants
+
+## 1. Protect Existing Functionality
+
+* **Do not break existing functionality.**
+* Before modifying code, understand how the existing system works and what depends on it.
+* Make the **smallest change necessary** to accomplish the requested task.
+* Do not rewrite, refactor, reorganize, or replace working systems unless explicitly requested.
+* If a system already works, **leave it alone unless the task specifically requires changing it.**
+
+## 2. Alignment System — CRITICAL
+
+The **alignment system is a critical part of this project.**
+
+* **DO NOT break, remove, replace, simplify, disable, or significantly alter the alignment system.**
+* The alignment system must continue working **in the same capacity and with the same behavior** unless the user explicitly asks for changes to that exact aspect of the alignment system.
+* Do not modify alignment-related code merely because you believe there is a "better" implementation.
+* Do not change alignment behavior as a side effect of another feature.
+* If another change could affect the alignment system, **verify that alignment still works before considering the task complete.**
+* If specifically asked to modify the alignment system, preserve all existing functionality that is not directly related to the requested change.
+* **DO NOT BREAK THE ALIGNMENT SYSTEM FOR ANY REASON.**
+* **For the user's mental sanity, keeping the alignment system working is an extremely high priority. Do not casually risk breaking it.**
+
+## 3. Don't "Improve" Things That Were Not Requested
+
+* Do not make unsolicited improvements.
+* Do not change UI layouts, styling, architecture, naming, or behavior unless necessary for the requested task.
+* Do not replace an existing implementation with a different framework, library, or architecture without explicit permission.
+* "Cleaner," "more modern," or "more efficient" does not automatically mean "better" for this project.
+
+## 4. Preserve Backwards Compatibility
+
+* Existing features must continue to work after changes.
+* Existing user workflows should remain functional unless the user explicitly requests a workflow change.
+* Do not remove existing APIs, functions, components, database structures, or configuration without permission.
+* If something must be changed, preserve compatibility whenever reasonably possible.
+
+## 5. Make Changes Incrementally
+
+* Make one logical change at a time.
+* Avoid large rewrites when a targeted modification will work.
+* Do not modify unrelated files.
+* Keep diffs as small and understandable as possible.
+
+## 6. Check Your Work
+
+Before declaring a task complete:
+
+* Check that the requested feature works.
+* Check that existing functionality affected by the change still works.
+* **Pay particular attention to the alignment system.**
+* Look for obvious errors, broken imports, missing references, and unintended side effects.
+* If tests exist, run the relevant tests.
+
+## 7. When Unsure, STOP
+
+If you are unsure whether a change will break an existing system:
+
+**Do not guess.**
+
+Explain what you are unsure about and ask the user before making a potentially destructive change.
+
+## 8. Do Not Delete Without Permission
+
+* Do not delete files, functions, components, features, or data unless explicitly requested.
+* Do not remove "unused" code unless you have confirmed that it is genuinely unused and removal is necessary for the requested task.
+* Do not delete something simply because you do not understand its purpose.
+
+## 9. Respect Existing Architecture
+
+* Learn the existing project structure before making significant changes.
+* Follow existing patterns and conventions.
+* Do not introduce unnecessary dependencies.
+* Do not create duplicate systems when an existing system can be extended.
+
+## 10. User Instructions Take Priority
+
+The user's explicit request determines what should be changed.
+
+If the user says:
+
+> "Only change X."
+
+Then **only change X.**
+
+Do not use the request as an excuse to modify unrelated parts of the project.
+
+## 11. Be Token-Conscious
+
+AI token usage is a **limited project resource**. The goal is to accomplish as much useful work as possible during each available token/cooldown period.
+
+* **Do not waste tokens on unnecessary explanations.**
+* Keep responses focused on the task being performed.
+* Do not repeatedly explain the same thing.
+* Do not restate the user's request unless clarification is genuinely needed.
+* Avoid unnecessary conversational filler.
+* Prioritize **actually completing the task** over writing a long explanation about the task.
+* When multiple related changes are requested, handle them together when practical instead of unnecessarily splitting them into separate cycles.
+* Reuse information that has already been established rather than rediscovering it.
+* Inspect only the relevant parts of the repository instead of unnecessarily scanning everything.
+* Search for specific files, functions, components, and references rather than reading unrelated code.
+* Do not generate large amounts of code when a small modification will accomplish the same result.
+* Do not perform unnecessary refactoring.
+* Do not repeatedly run the same checks when nothing has changed.
+* If a task can safely be completed in one edit, **complete it in one edit.**
+* If several files need coordinated changes, make the necessary changes together when possible.
+* Prioritize high-value work over cosmetic improvements.
+
+### Token Efficiency vs. Safety
+
+**Being token-conscious does NOT mean skipping important safety or quality checks.**
+
+Never save tokens by:
+
+* Skipping verification of important changes.
+* Ignoring possible regressions.
+* Assuming code works without checking when checking is reasonably possible.
+* Removing important functionality.
+* Skipping consideration of the alignment system.
+* Making a risky change simply because it is faster.
+
+The goal is:
+
+> **Use as few tokens as reasonably possible while still producing a correct, tested, non-destructive result.**
+
+## 12. Avoid AI Loops
+
+If you encounter an error:
+
+1. Identify the actual cause.
+2. Make the smallest reasonable fix.
+3. Test the fix.
+4. Do not repeatedly make random changes hoping something works.
+
+If you are stuck after reasonable investigation, **stop and explain the specific blocker instead of consuming tokens on increasingly speculative changes.**
+
+## 13. Prioritize Project Progress
+
+Every AI interaction should, when possible, leave the project in a **better or equally functional state**.
+
+Prefer:
+
+**Inspect → Plan → Edit → Verify → Report**
+
+over:
+
+**Inspect → Overthink → Explain → Rewrite unrelated code → Break something → Spend another cycle fixing it.**
+
+## 14. Core Principle
+
+> **A working feature is more valuable than an unnecessary "improvement."**
+
+When choosing between a risky rewrite and a small modification that preserves existing behavior, **choose the small modification.**
+
+### FINAL REMINDER
+
+**KEEP THE ALIGNMENT SYSTEM WORKING.**
+
+Do not break it.
+
+Do not accidentally change it.
+
+Do not "improve" it without permission.
+
+If you are specifically asked to work on it, make the requested change **without destroying the functionality that already exists.**
+
+**And for the user's mental sanity: DO NOT BREAK THE ALIGNMENT SYSTEM.**

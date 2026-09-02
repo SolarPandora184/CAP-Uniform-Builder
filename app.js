@@ -189,6 +189,158 @@ function getRibbonRackBounds() {
   };
 }
 
+// ============================================================
+// GUIDED CALIBRATION: derive all 5 anchors from 6 primitive clicks
+// ============================================================
+// Real-world height of the CAP Class A nameplate, in inches — this is
+// the one fact that lets us convert the regulation's inch-based offsets
+// ("1 1/2 inch below the nametag", etc.) into percentages of any given
+// coat image. Confirmed directly, not assumed.
+const NAMETAG_HEIGHT_IN = 0.75;
+
+// Turns 6 raw clicked points into the 5 badge anchors, using the exact
+// offsets from CAPR 39-1 4.1.5.2.2.4.2:
+//   - pocketFlap (NRA Marksmanship): centered on the pocket — pure
+//     geometry, no inches needed, since it's literally the pocket's
+//     own midpoint.
+//   - pocketTop (ribbon rack boundary): the pocket's top edge itself —
+//     also pure geometry, no offset.
+//   - pocket (rocketry/first specialty badge): "1 1/2 inch below top
+//     of welt pocket"
+//   - belowNametag: "1 1/2 inch below the nametag" (measured from the
+//     nametag's bottom edge to the badge's top edge)
+//   - aboveNametag: "1/2 inch above the nametag" (measured from the
+//     nametag's top edge to the badge's bottom edge)
+function deriveAnchorsFromPrimitives(p) {
+  const round1 = n => Math.round(n * 10) / 10;
+  const inchesToPct = (p.nametagBottomY - p.nametagTopY) / NAMETAG_HEIGHT_IN;
+
+  return {
+    anchors: {
+      pocketTop:    { x: round1(p.pocketSideX), y: round1(p.pocketTopY), align: "top" },
+      pocketFlap:   { x: round1(p.pocketSideX), y: round1((p.pocketTopY + p.pocketBottomY) / 2), align: "center" },
+      pocket:       { x: round1(p.pocketSideX), y: round1(p.pocketTopY + 1.5 * inchesToPct), align: "top" },
+      belowNametag: { x: round1(p.nametagSideX), y: round1(p.nametagBottomY + 1.5 * inchesToPct), align: "top" },
+      aboveNametag: { x: round1(p.nametagSideX), y: round1(p.nametagTopY - 0.5 * inchesToPct), align: "bottom" }
+    },
+    inchesToPct,
+    warnings: validatePrimitives(p, inchesToPct)
+  };
+}
+
+// Catches exactly the kind of silent error found earlier (a stale
+// pocketTop that put a badge's top edge ABOVE the pocket instead of
+// below it) instead of producing a result that looks fine on paper but
+// is actually backwards.
+function validatePrimitives(p, inchesToPct) {
+  const warnings = [];
+  if (p.pocketBottomY <= p.pocketTopY) {
+    warnings.push("Pocket bottom is above pocket top — did you click those in the wrong order?");
+  }
+  if (p.nametagBottomY <= p.nametagTopY) {
+    warnings.push("Nameplate bottom is above nameplate top — did you click those in the wrong order?");
+  }
+  if (!Number.isFinite(inchesToPct) || inchesToPct <= 0) {
+    warnings.push("Couldn't compute a usable inches-to-% scale from the nameplate clicks.");
+  } else if (inchesToPct < 1 || inchesToPct > 15) {
+    warnings.push(`Scale factor came out to ${inchesToPct.toFixed(2)}% per inch, which is an unusual value — double-check the nameplate top/bottom clicks.`);
+  }
+  return warnings;
+}
+
+const GUIDED_STEPS = [
+  { key: "pocketTopY",    axis: "y", label: "Click the TOP edge of the pocket" },
+  { key: "pocketBottomY", axis: "y", label: "Click the BOTTOM edge of the pocket" },
+  { key: "pocketSideX",   axis: "x", label: "Click the CENTERLINE of the pocket (left-right center)" },
+  { key: "nametagTopY",   axis: "y", label: "Click the TOP edge of the nameplate" },
+  { key: "nametagBottomY",axis: "y", label: "Click the BOTTOM edge of the nameplate" },
+  { key: "nametagSideX",  axis: "x", label: "Click the CENTERLINE of the nameplate (left-right center)" }
+];
+
+let guidedActive = false;
+let guidedStepIndex = 0;
+let guidedValues = {};
+
+function stopGuidedCalibration() {
+  guidedActive = false;
+  const startBtn = document.getElementById("guided-start");
+  const stepText = document.getElementById("guided-step");
+  const frame = document.getElementById("uniform-frame");
+  if (!freeformCalibrationActive) frame.style.cursor = "default";
+  if (stepText) stepText.textContent = "";
+}
+
+function setupGuidedCalibration() {
+  const startBtn = document.getElementById("guided-start");
+  const stepText = document.getElementById("guided-step");
+  const frame = document.getElementById("uniform-frame");
+  const outputWrap = document.getElementById("guided-output-wrap");
+  const output = document.getElementById("guided-output");
+  const copyBtn = document.getElementById("guided-copy");
+
+  startBtn.addEventListener("click", () => {
+    // Only one calibration mode active at a time.
+    freeformCalibrationActive = false;
+    document.getElementById("calibrate-toggle").classList.remove("active");
+    document.getElementById("calibrate-crosshair").hidden = true;
+    document.getElementById("calibrate-readout").textContent = "";
+
+    guidedActive = true;
+    guidedStepIndex = 0;
+    guidedValues = {};
+    outputWrap.hidden = true;
+    output.value = "";
+    frame.style.cursor = "crosshair";
+    stepText.textContent = `Step 1 of 6: ${GUIDED_STEPS[0].label}`;
+  });
+
+  frame.addEventListener("click", (e) => {
+    if (!guidedActive) return;
+
+    const rect = frame.getBoundingClientRect();
+    const xPct = ((e.clientX - rect.left) / rect.width) * 100;
+    const yPct = ((e.clientY - rect.top) / rect.height) * 100;
+    const step = GUIDED_STEPS[guidedStepIndex];
+    guidedValues[step.key] = step.axis === "x" ? xPct : yPct;
+
+    guidedStepIndex++;
+    if (guidedStepIndex < GUIDED_STEPS.length) {
+      stepText.textContent = `Step ${guidedStepIndex + 1} of 6: ${GUIDED_STEPS[guidedStepIndex].label}`;
+    } else {
+      guidedActive = false;
+      frame.style.cursor = "default";
+      stepText.textContent = "Done — see the code below.";
+      showGuidedResult(outputWrap, output);
+    }
+  });
+
+  copyBtn.addEventListener("click", () => {
+    output.select();
+    document.execCommand("copy");
+  });
+}
+
+function showGuidedResult(outputWrap, output) {
+  const { anchors, inchesToPct, warnings } = deriveAnchorsFromPrimitives(guidedValues);
+  const profileLabel = selectedCord ? `cord: ${selectedCord}` : "default (no cord)";
+
+  const lines = [];
+  lines.push(`// Profile: ${profileLabel}`);
+  lines.push(`// Scale: ${inchesToPct.toFixed(2)}% of image height per inch (from a ${NAMETAG_HEIGHT_IN}" nameplate)`);
+  if (warnings.length) {
+    lines.push("// ⚠ WARNINGS — check these before using this result:");
+    warnings.forEach(w => lines.push(`//   - ${w}`));
+  }
+  lines.push("");
+  for (const [key, val] of Object.entries(anchors)) {
+    const pad = " ".repeat(Math.max(0, 13 - key.length));
+    lines.push(`${key}:${pad}{ x: ${val.x}, y: ${val.y}, align: "${val.align}" },`);
+  }
+
+  outputWrap.hidden = false;
+  output.value = lines.join("\n");
+}
+
 const BADGE_IMG_DIR = "images/badges/";
 
 function findBadge(id) {
@@ -206,7 +358,7 @@ const selectedRibbons = new Set();
 let selectedCord = null;
 let selectedTrack = null;
 
-const DATA_VERSION = 10;
+const DATA_VERSION = 11;
 
 async function init() {
   const [badgeRes, cordRes, ribbonRes] = await Promise.all([
@@ -229,6 +381,7 @@ async function init() {
   renderRibbonChecklist();
   setupRowSizeToggle();
   setupCalibration();
+  setupGuidedCalibration();
   render();
 }
 
@@ -659,23 +812,25 @@ function drawFallbackCord(hex) {
 }
 
 // --- Calibration mode: click the coat to read off % coordinates for ANCHORS ---
+let freeformCalibrationActive = false;
+
 function setupCalibration() {
   const toggleBtn = document.getElementById("calibrate-toggle");
   const frame = document.getElementById("uniform-frame");
   const crosshair = document.getElementById("calibrate-crosshair");
   const readout = document.getElementById("calibrate-readout");
-  let active = false;
 
   toggleBtn.addEventListener("click", () => {
-    active = !active;
-    toggleBtn.classList.toggle("active", active);
-    crosshair.hidden = !active;
-    readout.textContent = active ? "Click the coat to read x/y %" : "";
-    frame.style.cursor = active ? "crosshair" : "default";
+    freeformCalibrationActive = !freeformCalibrationActive;
+    if (freeformCalibrationActive) stopGuidedCalibration(); // only one mode active at a time
+    toggleBtn.classList.toggle("active", freeformCalibrationActive);
+    crosshair.hidden = !freeformCalibrationActive;
+    readout.textContent = freeformCalibrationActive ? "Click the coat to read x/y %" : "";
+    frame.style.cursor = freeformCalibrationActive ? "crosshair" : "default";
   });
 
   frame.addEventListener("click", (e) => {
-    if (!active) return;
+    if (!freeformCalibrationActive) return;
     const rect = frame.getBoundingClientRect();
     const xPct = ((e.clientX - rect.left) / rect.width) * 100;
     const yPct = ((e.clientY - rect.top) / rect.height) * 100;

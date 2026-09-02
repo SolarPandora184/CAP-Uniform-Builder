@@ -39,81 +39,95 @@ const RESTRICTION_LABEL = {
 // out of alignment with each other (they previously could — aviationBase
 // was still at 67.7 while everything else had moved to 67.6). Adjust
 // these two numbers to shift an entire side at once.
-const SIDE_CENTER = {
-  pocketSide: 67.6,   // wearer's left: ribbon rack, pocket, rocketry, aviation badges — image-right
-  nametagSide: 30.9   // wearer's right: nametag, below/above-nametag badges — image-left
-};
-
+// ============================================================
+// DEFAULT ANCHORS (no cord / plain jacket)
+// ============================================================
+// Every anchor below corresponds to one calibration click. To
+// recalibrate this image: open the live page with no cord selected,
+// click "Calibrate anchors", click the described point, and paste the
+// x/y readout straight into that field.
 const ANCHORS = {
-  aviationBase: { x: SIDE_CENTER.pocketSide, y: 27, align: "center" },     // first aviation badge, above the ribbon rack
-  aviationStep: 5,                                                          // vertical spacing (in % of image height) between stacked aviation badges
-  pocket: { x: SIDE_CENTER.pocketSide, y: 39.4, align: "top" },             // wearer's left welt pocket — rocketry (or first queued specialty badge) fixed here, top edge
-  pocketFlap: { x: SIDE_CENTER.pocketSide, y: 36.0, align: "center" },      // pocket CENTER — NRA marksmanship centered here
-  pocketTop: { x: SIDE_CENTER.pocketSide, y: 34.2, align: "top" },          // top edge of the pocket — ribbon rack's bottom row rests here (not yet re-measured; carried over from earlier crop-based estimate, consistent with the new 36.0 center)
-  belowNametag: { x: SIDE_CENTER.nametagSide, y: 37.5, align: "top" },      // wearer's right, 1.5" below nametag, top edge
-  aboveNametag: { x: SIDE_CENTER.nametagSide, y: 32.0, align: "bottom" }    // centered over the nametag, 0.5" above it, bottom edge
+  pocket:       { x: 67.6, y: 39.4, align: "top" },      // TOP edge of the pocket-slot badge (rocketry, or first queued specialty badge)
+  pocketFlap:   { x: 67.6, y: 36.0, align: "center" },   // CENTER of the pocket itself (NRA Marksmanship badge)
+  pocketTop:    { x: 67.6, y: 34.2, align: "top" },      // TOP edge of the pocket (ribbon rack's bottom row rests exactly here)
+  belowNametag: { x: 30.9, y: 37.5, align: "top" },      // TOP edge of the badge below the nameplate
+  aboveNametag: { x: 30.9, y: 32.0, align: "bottom" },   // BOTTOM edge of the badge above the nameplate
+  aviationBase: { x: 67.6, y: 27,   align: "center" },   // CENTER of the top aviation badge (e.g. sUAS wings), above the ribbon rack
+  aviationStep: 5                                         // vertical spacing (% of image height) between stacked aviation badges — not a click, just a gap size
 };
 
-// Per-cord anchor overrides. Selecting a cord swaps in a whole new coat
-// photo (different framing/resolution than the base illustration), so
-// the pocket/nametag positions above won't necessarily line up on that
-// photo. Add an entry here (any subset of ANCHORS keys) once a cord's
-// composite photo has been calibrated with "Calibrate anchors"; anything
-// not overridden falls back to the default ANCHORS above.
 // ============================================================
-// PER-CORD ALIGNMENT OVERRIDES
+// PER-CORD ANCHOR OVERRIDES
 // ============================================================
-// Each cord swaps in a totally different coat photo, so the pocket and
-// nametag positions calibrated for the default coat-front.png won't
-// necessarily line up. Each block below is its own independently
-// editable entry:
-//
-//   sideCenter: { pocketSide: X, nametagSide: X }
-//     Shorthand — shifts every anchor on that side to a new x, same
-//     idea as the base SIDE_CENTER above. Use this first; it's usually
-//     enough on its own.
-//
-//   Individual anchor keys (pocket / pocketFlap / pocketTop /
-//   belowNametag / aboveNametag / aviationBase), each a full
-//   { x, y, align } object — for finer per-badge control when a photo
-//   needs more than just a horizontal shift (like red, below). These
-//   always win over sideCenter for that specific anchor.
-//
-// An empty {} (or leaving a cord out entirely) just falls back to the
-// base ANCHORS untouched.
+// Each cord swaps in a completely different coat photo, so it needs
+// its own calibration. Every block below has the SAME six fields as
+// the default ANCHORS above, with the same click instructions — fill
+// each one in by selecting that cord, clicking "Calibrate anchors",
+// clicking the described point, and pasting the x/y readout straight
+// in. Leave a field as `null` (for either x or y) and it's ignored —
+// that specific anchor just falls back to the default ANCHORS until
+// you fill it in, so you can calibrate a cord one point at a time
+// without anything breaking in between.
 const ANCHOR_OVERRIDES = {
 
   // --- RED ----------------------------------------------------
   red: {
-    pocket: { x: 66.2, y: 40.0, align: "top" },
-    pocketFlap: { x: 66.2, y: 36.4, align: "center" },
-    belowNametag: { x: 30.3, y: 38.2, align: "top" },
-    aboveNametag: { x: 30.3, y: 30.6, align: "bottom" }
+    pocket:       { x: 66.2, y: 40.0, align: "top" },     // TOP edge of pocket-slot badge (rocketry)
+    pocketFlap:   { x: 66.2, y: 36.4, align: "center" },  // CENTER of the pocket (NRA Marksmanship)
+    pocketTop:    { x: null, y: null, align: "top" },     // TOP edge of the pocket (ribbon rack rests here) — not yet calibrated
+    belowNametag: { x: 30.3, y: 38.2, align: "top" },     // TOP edge of badge below the nameplate
+    aboveNametag: { x: 30.3, y: 30.6, align: "bottom" },  // BOTTOM edge of badge above the nameplate
+    aviationBase: { x: null, y: null, align: "center" }   // CENTER of top aviation badge (sUAS wings etc.) — not yet calibrated
   },
 
   // --- BLUE ---------------------------------------------------
   blue: {
-    // sideCenter: { pocketSide: .., nametagSide: .. },
+    pocket:       { x: null, y: null, align: "top" },     // TOP edge of pocket-slot badge (rocketry)
+    pocketFlap:   { x: null, y: null, align: "center" },  // CENTER of the pocket (NRA Marksmanship)
+    pocketTop:    { x: null, y: null, align: "top" },     // TOP edge of the pocket (ribbon rack rests here)
+    belowNametag: { x: null, y: null, align: "top" },     // TOP edge of badge below the nameplate
+    aboveNametag: { x: null, y: null, align: "bottom" },  // BOTTOM edge of badge above the nameplate
+    aviationBase: { x: null, y: null, align: "center" }   // CENTER of top aviation badge (sUAS wings etc.)
   },
 
   // --- GREEN --------------------------------------------------
   green: {
-    // sideCenter: { pocketSide: .., nametagSide: .. },
+    pocket:       { x: null, y: null, align: "top" },
+    pocketFlap:   { x: null, y: null, align: "center" },
+    pocketTop:    { x: null, y: null, align: "top" },
+    belowNametag: { x: null, y: null, align: "top" },
+    aboveNametag: { x: null, y: null, align: "bottom" },
+    aviationBase: { x: null, y: null, align: "center" }
   },
 
   // --- WHITE --------------------------------------------------
   white: {
-    // sideCenter: { pocketSide: .., nametagSide: .. },
+    pocket:       { x: null, y: null, align: "top" },
+    pocketFlap:   { x: null, y: null, align: "center" },
+    pocketTop:    { x: null, y: null, align: "top" },
+    belowNametag: { x: null, y: null, align: "top" },
+    aboveNametag: { x: null, y: null, align: "bottom" },
+    aviationBase: { x: null, y: null, align: "center" }
   },
 
   // --- BLACK --------------------------------------------------
   black: {
-    // sideCenter: { pocketSide: .., nametagSide: .. },
+    pocket:       { x: null, y: null, align: "top" },
+    pocketFlap:   { x: null, y: null, align: "center" },
+    pocketTop:    { x: null, y: null, align: "top" },
+    belowNametag: { x: null, y: null, align: "top" },
+    aboveNametag: { x: null, y: null, align: "bottom" },
+    aviationBase: { x: null, y: null, align: "center" }
   },
 
   // --- SILVER -------------------------------------------------
   silver: {
-    // sideCenter: { pocketSide: .., nametagSide: .. },
+    pocket:       { x: null, y: null, align: "top" },
+    pocketFlap:   { x: null, y: null, align: "center" },
+    pocketTop:    { x: null, y: null, align: "top" },
+    belowNametag: { x: null, y: null, align: "top" },
+    aboveNametag: { x: null, y: null, align: "bottom" },
+    aviationBase: { x: null, y: null, align: "center" }
   },
 
 };
@@ -122,21 +136,17 @@ function getActiveAnchors() {
   const override = selectedCord ? ANCHOR_OVERRIDES[selectedCord] : null;
   if (!override) return ANCHORS;
 
-  let anchors = ANCHORS;
-  if (override.sideCenter) {
-    const sc = { ...SIDE_CENTER, ...override.sideCenter };
-    anchors = {
-      ...ANCHORS,
-      aviationBase: { ...ANCHORS.aviationBase, x: sc.pocketSide },
-      pocket: { ...ANCHORS.pocket, x: sc.pocketSide },
-      pocketFlap: { ...ANCHORS.pocketFlap, x: sc.pocketSide },
-      pocketTop: { ...ANCHORS.pocketTop, x: sc.pocketSide },
-      belowNametag: { ...ANCHORS.belowNametag, x: sc.nametagSide },
-      aboveNametag: { ...ANCHORS.aboveNametag, x: sc.nametagSide }
-    };
+  // Only apply fields that are actually filled in (both x and y non-null).
+  // Anything still null falls back to the default ANCHORS untouched, so a
+  // cord can be calibrated one point at a time without breaking the rest.
+  const applied = {};
+  for (const key of Object.keys(override)) {
+    const entry = override[key];
+    if (entry && entry.x != null && entry.y != null) {
+      applied[key] = entry;
+    }
   }
-  // Individual anchor keys in override always win over the sideCenter-derived base.
-  return { ...anchors, ...override };
+  return { ...ANCHORS, ...applied };
 }
 
 // Fallback cord band path, as percentage-based points along the coat
@@ -182,7 +192,7 @@ const BADGE_BOX_PX = 70;
 const RIBBON_RACK_WIDTH = 15.6; // total rack width in % of image width, centered on the ACTIVE profile's pocket-side x
 
 function getRibbonRackBounds() {
-  const center = getActiveAnchors().pocket.x; // already reflects any per-cord sideCenter/override
+  const center = getActiveAnchors().pocket.x; // already reflects any per-cord override
   return {
     leftPct: center - RIBBON_RACK_WIDTH / 2,
     rightPct: center + RIBBON_RACK_WIDTH / 2
@@ -206,7 +216,7 @@ const selectedRibbons = new Set();
 let selectedCord = null;
 let selectedTrack = null;
 
-const DATA_VERSION = 8;
+const DATA_VERSION = 9;
 
 async function init() {
   const [badgeRes, cordRes, ribbonRes] = await Promise.all([

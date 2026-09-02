@@ -35,7 +35,7 @@ const RESTRICTION_LABEL = {
 // x/y readout straight into that field.
 const ANCHORS = {
   pocket:       { x: 67.6, y: 39.4, align: "top" },      // TOP edge of the pocket-slot badge (rocketry, or first queued specialty badge)
-  pocketFlap:   { x: 67.6, y: 36.0, align: "top" },   // CENTER of the pocket itself (NRA Marksmanship badge)
+  pocketFlap:   { x: 67.6, y: 35.2, align: "top" },   // CENTER of the pocket itself (NRA Marksmanship badge)
   pocketTop:    { x: 67.6, y: 34.2, align: "top" },      // TOP edge of the pocket (ribbon rack's bottom row rests exactly here)
   belowNametag: { x: 30.9, y: 37.5, align: "top" },      // TOP edge of the badge below the nameplate
   aboveNametag: { x: 30.9, y: 32.0, align: "bottom" }    // BOTTOM edge of the badge above the nameplate

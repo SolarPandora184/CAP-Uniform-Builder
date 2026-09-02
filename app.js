@@ -15,33 +15,20 @@ const RESTRICTION_LABEL = {
   any: null
 };
 
-// Anchor points as PERCENTAGES of the coat image's width/height (0–100).
-// Wearer's LEFT = image-right (ribbon/pocket side). Wearer's RIGHT = image-left (nametag side).
-//
-// Measured directly from images/coat-front.png (1106x1422) via pixel
-// color detection: nametag center ~31% x / 32.8-35.3% y, welt pocket
-// (mirrors the nametag on the other side) center ~67.7% x / 34.2-37.5% y.
-//
-// If you replace coat-front.png again, use "Calibrate anchors" on the
-// live page to re-check these — click the real nametag/pocket corners
-// and compare against the numbers below.
-// Anchors for the DEFAULT coat image (no cord, or a cord with no per-cord
-// override below). Each anchor has an "align" telling render() which edge
-// of the badge image should sit at that y-coordinate:
-//   'top'    -> badge's top edge sits at y (use when the measured point
-//               was "top of the badge should be here")
-//   'bottom' -> badge's bottom edge sits at y
-//   'center' -> badge is centered on the point (default when nothing's
-//               been measured yet)
-// x is always the horizontal center regardless of align.
-// Single center-line per side, in % of image width. Every anchor and the
-// ribbon rack on that side derives its x from here, so they can't drift
-// out of alignment with each other (they previously could — aviationBase
-// was still at 67.7 while everything else had moved to 67.6). Adjust
-// these two numbers to shift an entire side at once.
 // ============================================================
 // DEFAULT ANCHORS (no cord / plain jacket)
 // ============================================================
+// Anchor points as percentages of the coat image's width/height (0-100).
+// Wearer's LEFT = image-right (ribbon/pocket side). Wearer's RIGHT =
+// image-left (nametag side).
+//
+// Each anchor has an "align" telling render() which edge of the badge
+// image should sit at that y-coordinate:
+//   'top'    -> badge's top edge sits at y
+//   'bottom' -> badge's bottom edge sits at y
+//   'center' -> badge is centered on the point
+// x is always the horizontal center regardless of align.
+//
 // Every anchor below corresponds to one calibration click. To
 // recalibrate this image: open the live page with no cord selected,
 // click "Calibrate anchors", click the described point, and paste the
@@ -51,10 +38,19 @@ const ANCHORS = {
   pocketFlap:   { x: 67.6, y: 36.0, align: "center" },   // CENTER of the pocket itself (NRA Marksmanship badge)
   pocketTop:    { x: 67.6, y: 34.2, align: "top" },      // TOP edge of the pocket (ribbon rack's bottom row rests exactly here)
   belowNametag: { x: 30.9, y: 37.5, align: "top" },      // TOP edge of the badge below the nameplate
-  aboveNametag: { x: 30.9, y: 32.0, align: "bottom" },   // BOTTOM edge of the badge above the nameplate
-  aviationBase: { x: 67.6, y: 27,   align: "center" },   // CENTER of the top aviation badge (e.g. sUAS wings), above the ribbon rack
-  aviationStep: 5                                         // vertical spacing (% of image height) between stacked aviation badges — not a click, just a gap size
+  aboveNametag: { x: 30.9, y: 32.0, align: "bottom" }    // BOTTOM edge of the badge above the nameplate
 };
+
+// Vertical spacing (% of image height) between stacked aviation badges.
+// Not a calibration click — aviation badges no longer have their own
+// anchor at all. Both x and y are derived live from wherever the ribbon
+// rack actually is (see assignPositions): x matches the rack's own
+// centerline (same as anchors.pocket.x), and y sits the same
+// proportional gap above the top ribbon row (or the pocket, if there
+// are no ribbons) that layoutRibbonRack() already computes. This keeps
+// the badge glued to the ribbons/pocket no matter which cord or badge
+// combination is selected, with nothing that can drift out of sync.
+const AVIATION_STEP = 5;
 
 // ============================================================
 // PER-CORD ANCHOR OVERRIDES
@@ -77,7 +73,6 @@ const ANCHOR_OVERRIDES = {
     pocketTop:    { x: null, y: null, align: "top" },     // TOP edge of the pocket (ribbon rack rests here) — not yet calibrated
     belowNametag: { x: 30.3, y: 38.2, align: "top" },     // TOP edge of badge below the nameplate
     aboveNametag: { x: 30.3, y: 30.6, align: "bottom" },  // BOTTOM edge of badge above the nameplate
-    aviationBase: { x: null, y: null, align: "center" }   // CENTER of top aviation badge (sUAS wings etc.) — not yet calibrated
   },
 
   // --- BLUE ---------------------------------------------------
@@ -87,7 +82,6 @@ const ANCHOR_OVERRIDES = {
     pocketTop:    { x: null, y: null, align: "top" },     // TOP edge of the pocket (ribbon rack rests here)
     belowNametag: { x: null, y: null, align: "top" },     // TOP edge of badge below the nameplate
     aboveNametag: { x: null, y: null, align: "bottom" },  // BOTTOM edge of badge above the nameplate
-    aviationBase: { x: null, y: null, align: "center" }   // CENTER of top aviation badge (sUAS wings etc.)
   },
 
   // --- GREEN --------------------------------------------------
@@ -97,7 +91,6 @@ const ANCHOR_OVERRIDES = {
     pocketTop:    { x: null, y: null, align: "top" },
     belowNametag: { x: null, y: null, align: "top" },
     aboveNametag: { x: null, y: null, align: "bottom" },
-    aviationBase: { x: null, y: null, align: "center" }
   },
 
   // --- WHITE --------------------------------------------------
@@ -107,7 +100,6 @@ const ANCHOR_OVERRIDES = {
     pocketTop:    { x: null, y: null, align: "top" },
     belowNametag: { x: null, y: null, align: "top" },
     aboveNametag: { x: null, y: null, align: "bottom" },
-    aviationBase: { x: null, y: null, align: "center" }
   },
 
   // --- BLACK --------------------------------------------------
@@ -117,7 +109,6 @@ const ANCHOR_OVERRIDES = {
     pocketTop:    { x: null, y: null, align: "top" },
     belowNametag: { x: null, y: null, align: "top" },
     aboveNametag: { x: null, y: null, align: "bottom" },
-    aviationBase: { x: null, y: null, align: "center" }
   },
 
   // --- SILVER -------------------------------------------------
@@ -127,7 +118,6 @@ const ANCHOR_OVERRIDES = {
     pocketTop:    { x: null, y: null, align: "top" },
     belowNametag: { x: null, y: null, align: "top" },
     aboveNametag: { x: null, y: null, align: "bottom" },
-    aviationBase: { x: null, y: null, align: "center" }
   },
 
 };
@@ -216,7 +206,7 @@ const selectedRibbons = new Set();
 let selectedCord = null;
 let selectedTrack = null;
 
-const DATA_VERSION = 9;
+const DATA_VERSION = 10;
 
 async function init() {
   const [badgeRes, cordRes, ribbonRes] = await Promise.all([
@@ -382,15 +372,18 @@ function assignPositions(ribbonTopY, aviationGapPct) {
   const placements = [];
   const anchors = getActiveAnchors();
 
-  // Aviation/occupational badges: stack upward from the base anchor, in selection order.
+  // Aviation/occupational badges: stack upward from just above the ribbon
+  // rack (or the pocket, if no ribbons), sharing the rack's own centerline —
+  // no separate calibration needed, this just follows wherever the ribbons are.
   const aviationBaseY = ribbonTopY - aviationGapPct;
+  const aviationX = anchors.pocket.x;
   const aviation = chosen.filter(b => b.category === "aviation_occupational");
   aviation.forEach((b, i) => {
     placements.push({
       badge: b,
-      x: anchors.aviationBase.x,
-      y: aviationBaseY - i * anchors.aviationStep,
-      align: anchors.aviationBase.align
+      x: aviationX,
+      y: aviationBaseY - i * AVIATION_STEP,
+      align: "center"
     });
   });
 

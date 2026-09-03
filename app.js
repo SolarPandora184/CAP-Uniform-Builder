@@ -404,7 +404,7 @@ const selectedRibbons = new Set();
 let selectedCord = null;
 let selectedTrack = null;
 
-const DATA_VERSION = 14;
+const DATA_VERSION = 15;
 
 async function init() {
   const [badgeRes, cordRes, ribbonRes] = await Promise.all([
@@ -951,8 +951,12 @@ function renderMeasurements(ribbonTopY, placements) {
 
   // --- Regulation-mandated gaps (fixed labels, always these exact numbers) ---
 
-  // Pocket top -> pocket-slot badge (rocketry etc.): 1.5" per CAPR 39-1
-  drawGap(anchors.pocket.x, anchors.pocketTop.y, anchors.pocket.y, '1.5"');
+  // Line is drawn from the pocket's BOTTOM edge (visual choice only — the
+  // badge itself is still correctly placed 1.5" below the pocket's TOP
+  // edge per CAPR 39-1, and that's still what the label reflects). Falls
+  // back to pocketTop if pocketBottom isn't calibrated yet for this image.
+  const pocketLineStart = anchors.pocketBottom?.y != null ? anchors.pocketBottom.y : anchors.pocketTop.y;
+  drawGap(anchors.pocket.x, pocketLineStart, anchors.pocket.y, '1.5"');
 
   // Nameplate bottom -> badge below nameplate: 1.5"
   if (anchors.nametagBottom?.y != null) {

@@ -400,7 +400,7 @@ const selectedRibbons = new Set();
 let selectedCord = null;
 let selectedTrack = null;
 
-const DATA_VERSION = 12;
+const DATA_VERSION = 13;
 
 async function init() {
   const [badgeRes, cordRes, ribbonRes] = await Promise.all([
@@ -911,40 +911,63 @@ function renderMeasurements(ribbonTopY, placements) {
   const anchors = getActiveAnchors();
   const ns = "http://www.w3.org/2000/svg";
 
+  // Lines that share (roughly) the same x would otherwise draw directly on
+  // top of each other — this fans each subsequent one out sideways instead.
+  const xUsageCount = {};
+
   function drawGap(x, yTop, yBottom, label) {
     if (!Number.isFinite(yTop) || !Number.isFinite(yBottom)) return;
+
+    const xKey = Math.round(x);
+    const count = xUsageCount[xKey] || 0;
+    xUsageCount[xKey] = count + 1;
+    const lineX = x + count * 3.4; // stagger each additional line at this x further right
+
     const line = document.createElementNS(ns, "line");
     line.setAttribute("class", "measurement-line");
-    line.setAttribute("x1", x); line.setAttribute("y1", yTop);
-    line.setAttribute("x2", x); line.setAttribute("y2", yBottom);
+    line.setAttribute("x1", lineX); line.setAttribute("y1", yTop);
+    line.setAttribute("x2", lineX); line.setAttribute("y2", yBottom);
     svg.appendChild(line);
 
     [yTop, yBottom].forEach(y => {
       const tick = document.createElementNS(ns, "line");
       tick.setAttribute("class", "measurement-tick");
-      tick.setAttribute("x1", x - 1.2); tick.setAttribute("y1", y);
-      tick.setAttribute("x2", x + 1.2); tick.setAttribute("y2", y);
+      tick.setAttribute("x1", lineX - 1.2); tick.setAttribute("y1", y);
+      tick.setAttribute("x2", lineX + 1.2); tick.setAttribute("y2", y);
       svg.appendChild(tick);
     });
 
     const text = document.createElementNS(ns, "text");
     text.setAttribute("class", "measurement-label");
-    text.setAttribute("x", x + 1.8);
+    text.setAttribute("x", lineX + 1.8);
     text.setAttribute("y", (yTop + yBottom) / 2 + 1);
     text.textContent = label;
     svg.appendChild(text);
   }
 
+  // How many % of image height one inch is, derived from the confirmed
+  // 0.75" nameplate — used only to label the two NEW extent lines below,
+  // which aren't regulation-mandated distances themselves (the reg never
+  // states the pocket's or nameplate's own size, only the offsets to
+  // badges), so their labels show the actual measured height rather than
+  // presenting a made-up number as if it were a CAPR 39-1 requirement.
+  let inchesToPct = null;
+  if (anchors.nametagTop?.y != null && anchors.nametagBottom?.y != null) {
+    inchesToPct = (anchors.nametagBottom.y - anchors.nametagTop.y) / NAMETAG_HEIGHT_IN;
+  }
+
+  // --- Regulation-mandated gaps (fixed labels, always these exact numbers) ---
+
   // Pocket top -> pocket-slot badge (rocketry etc.): 1.5" per CAPR 39-1
   drawGap(anchors.pocket.x, anchors.pocketTop.y, anchors.pocket.y, '1.5"');
 
   // Nameplate bottom -> badge below nameplate: 1.5"
-  if (anchors.nametagBottom && anchors.nametagBottom.y != null) {
+  if (anchors.nametagBottom?.y != null) {
     drawGap(anchors.belowNametag.x, anchors.nametagBottom.y, anchors.belowNametag.y, '1.5"');
   }
 
   // Nameplate top -> badge above nameplate: 0.5"
-  if (anchors.nametagTop && anchors.nametagTop.y != null) {
+  if (anchors.nametagTop?.y != null) {
     drawGap(anchors.aboveNametag.x, anchors.nametagTop.y, anchors.aboveNametag.y, '0.5"');
   }
 
@@ -952,6 +975,22 @@ function renderMeasurements(ribbonTopY, placements) {
   const aviationPlacement = placements.find(p => p.badge.category === "aviation_occupational");
   if (aviationPlacement) {
     drawGap(aviationPlacement.x, ribbonTopY, aviationPlacement.y, '0.5"');
+  }
+
+  // --- Extent lines (measured, not regulation-fixed) ---
+
+  // Pocket's own full height, top to bottom — shows where the badge sits
+  // relative to the WHOLE pocket, not just the top offset.
+  if (anchors.pocketBottom?.y != null) {
+    const label = inchesToPct
+      ? `${((anchors.pocketBottom.y - anchors.pocketTop.y) / inchesToPct).toFixed(2)}"`
+      : "pocket";
+    drawGap(anchors.pocket.x, anchors.pocketTop.y, anchors.pocketBottom.y, label);
+  }
+
+  // Nameplate's own full height, top to bottom — confirmed constant.
+  if (anchors.nametagTop?.y != null && anchors.nametagBottom?.y != null) {
+    drawGap(anchors.belowNametag.x, anchors.nametagTop.y, anchors.nametagBottom.y, `${NAMETAG_HEIGHT_IN}"`);
   }
 }
 

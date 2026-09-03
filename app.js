@@ -83,12 +83,12 @@ const ANCHOR_OVERRIDES = {
   red: {
     pocket:       { x: 66.2, y: 40.0, align: "top" },     // TOP edge of pocket-slot badge (rocketry)
     pocketFlap:   { x: 66.2, y: 36.4, align: "center" },  // CENTER of the pocket (NRA Marksmanship)
-    pocketTop:    { x: null, y: null, align: "top" },     // TOP edge of the pocket (ribbon rack rests here) — not yet calibrated
+    pocketTop:    { x: 66.2, y: 34.6, align: "top" },     // TOP edge of the pocket (ribbon rack rests here) — not yet calibrated
     belowNametag: { x: 30.3, y: 38.2, align: "top" },     // TOP edge of badge below the nameplate
     aboveNametag: { x: 30.3, y: 30.6, align: "bottom" },  // BOTTOM edge of badge above the nameplate
-    pocketBottom:  { x: null, y: null },  // BOTTOM edge of the pocket (for the measurement overlay)
-    nametagTop:    { x: null, y: null },  // TOP edge of the nameplate (for the measurement overlay)
-    nametagBottom: { x: null, y: null },  // BOTTOM edge of the nameplate (for the measurement overlay)
+   pocketBottom: { x: 66, y: 37.9 },
+nametagTop:   { x: 30.4, y: 33.1 },
+nametagBottom:{ x: 30.4, y: 36 },
   },
 
   // --- BLUE ---------------------------------------------------

@@ -404,7 +404,7 @@ const selectedRibbons = new Set();
 let selectedCord = null;
 let selectedTrack = null;
 
-const DATA_VERSION = 13;
+const DATA_VERSION = 14;
 
 async function init() {
   const [badgeRes, cordRes, ribbonRes] = await Promise.all([
@@ -949,17 +949,6 @@ function renderMeasurements(ribbonTopY, placements) {
     svg.appendChild(text);
   }
 
-  // How many % of image height one inch is, derived from the confirmed
-  // 0.75" nameplate — used only to label the two NEW extent lines below,
-  // which aren't regulation-mandated distances themselves (the reg never
-  // states the pocket's or nameplate's own size, only the offsets to
-  // badges), so their labels show the actual measured height rather than
-  // presenting a made-up number as if it were a CAPR 39-1 requirement.
-  let inchesToPct = null;
-  if (anchors.nametagTop?.y != null && anchors.nametagBottom?.y != null) {
-    inchesToPct = (anchors.nametagBottom.y - anchors.nametagTop.y) / NAMETAG_HEIGHT_IN;
-  }
-
   // --- Regulation-mandated gaps (fixed labels, always these exact numbers) ---
 
   // Pocket top -> pocket-slot badge (rocketry etc.): 1.5" per CAPR 39-1
@@ -983,19 +972,6 @@ function renderMeasurements(ribbonTopY, placements) {
 
   // --- Extent lines (measured, not regulation-fixed) ---
 
-  // Pocket's own full height, top to bottom — shows where the badge sits
-  // relative to the WHOLE pocket, not just the top offset.
-  if (anchors.pocketBottom?.y != null) {
-    const label = inchesToPct
-      ? `${((anchors.pocketBottom.y - anchors.pocketTop.y) / inchesToPct).toFixed(2)}"`
-      : "pocket";
-    drawGap(anchors.pocket.x, anchors.pocketTop.y, anchors.pocketBottom.y, label);
-  }
-
-  // Nameplate's own full height, top to bottom — confirmed constant.
-  if (anchors.nametagTop?.y != null && anchors.nametagBottom?.y != null) {
-    drawGap(anchors.belowNametag.x, anchors.nametagTop.y, anchors.nametagBottom.y, `${NAMETAG_HEIGHT_IN}"`);
-  }
 }
 
 function render() {

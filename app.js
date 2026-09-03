@@ -404,7 +404,7 @@ const selectedRibbons = new Set();
 let selectedCord = null;
 let selectedTrack = null;
 
-const DATA_VERSION = 15;
+const DATA_VERSION = 16;
 
 async function init() {
   const [badgeRes, cordRes, ribbonRes] = await Promise.all([
@@ -949,33 +949,47 @@ function renderMeasurements(ribbonTopY, placements) {
     svg.appendChild(text);
   }
 
+  // Canonical scale factor: % of image height per inch, derived once from
+  // the confirmed 0.75" nameplate. Every line below uses THIS single value
+  // to compute its length (anchored at the badge's real, unmoved position,
+  // extended toward the reference side) rather than trusting the raw gap
+  // between two independently-calibrated anchor points — those can drift
+  // slightly between separate calibration sessions, which would otherwise
+  // make a "1.5"" line and a "0.5"" line not actually look like a 3:1
+  // ratio on screen even though each point individually looks reasonable.
+  let inchesToPct = null;
+  if (anchors.nametagTop?.y != null && anchors.nametagBottom?.y != null) {
+    inchesToPct = (anchors.nametagBottom.y - anchors.nametagTop.y) / NAMETAG_HEIGHT_IN;
+  }
+
+  // direction: -1 if the reference point is ABOVE the badge (smaller y),
+  // +1 if below. Falls back to connecting the two raw anchor points if no
+  // scale factor is available yet (nameplate not calibrated for this
+  // image) — best-effort, but not guaranteed exactly to scale in that case.
+  function drawRegGap(x, badgeY, referenceYRaw, inches, direction, label) {
+    if (inchesToPct != null) {
+      drawGap(x, badgeY, badgeY + direction * inches * inchesToPct, label);
+    } else if (Number.isFinite(referenceYRaw)) {
+      drawGap(x, referenceYRaw, badgeY, label);
+    }
+  }
+
   // --- Regulation-mandated gaps (fixed labels, always these exact numbers) ---
 
-  // Line is drawn from the pocket's BOTTOM edge (visual choice only — the
-  // badge itself is still correctly placed 1.5" below the pocket's TOP
-  // edge per CAPR 39-1, and that's still what the label reflects). Falls
-  // back to pocketTop if pocketBottom isn't calibrated yet for this image.
-  const pocketLineStart = anchors.pocketBottom?.y != null ? anchors.pocketBottom.y : anchors.pocketTop.y;
-  drawGap(anchors.pocket.x, pocketLineStart, anchors.pocket.y, '1.5"');
+  // Pocket top -> pocket-slot badge (rocketry etc.): 1.5" per CAPR 39-1
+  drawRegGap(anchors.pocket.x, anchors.pocket.y, anchors.pocketTop.y, 1.5, -1, '1.5"');
 
   // Nameplate bottom -> badge below nameplate: 1.5"
-  if (anchors.nametagBottom?.y != null) {
-    drawGap(anchors.belowNametag.x, anchors.nametagBottom.y, anchors.belowNametag.y, '1.5"');
-  }
+  drawRegGap(anchors.belowNametag.x, anchors.belowNametag.y, anchors.nametagBottom?.y, 1.5, -1, '1.5"');
 
   // Nameplate top -> badge above nameplate: 0.5"
-  if (anchors.nametagTop?.y != null) {
-    drawGap(anchors.aboveNametag.x, anchors.nametagTop.y, anchors.aboveNametag.y, '0.5"');
-  }
+  drawRegGap(anchors.aboveNametag.x, anchors.aboveNametag.y, anchors.nametagTop?.y, 0.5, 1, '0.5"');
 
   // Ribbon rack top (or pocket top, if no ribbons) -> first aviation badge: 0.5"
   const aviationPlacement = placements.find(p => p.badge.category === "aviation_occupational");
   if (aviationPlacement) {
-    drawGap(aviationPlacement.x, ribbonTopY, aviationPlacement.y, '0.5"');
+    drawRegGap(aviationPlacement.x, aviationPlacement.y, ribbonTopY, 0.5, 1, '0.5"');
   }
-
-  // --- Extent lines (measured, not regulation-fixed) ---
-
 }
 
 function render() {

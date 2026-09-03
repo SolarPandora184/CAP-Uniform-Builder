@@ -257,6 +257,54 @@ body {
   cursor: pointer;
 }
 
+#measurement-toggle {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  padding: 6px 14px;
+  border-radius: 3px;
+  border: 1px solid var(--panel-line);
+  background: var(--panel);
+  color: var(--text-dim);
+  cursor: pointer;
+}
+
+#measurement-toggle.active {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+.measurement-overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.measurement-line {
+  stroke: #ff5a5a;
+  stroke-width: 0.3;
+  stroke-dasharray: 1.2 1;
+}
+
+.measurement-tick {
+  stroke: #ff5a5a;
+  stroke-width: 0.3;
+}
+
+.measurement-label {
+  fill: #ff5a5a;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 3px;
+  font-weight: 700;
+  paint-order: stroke;
+  stroke: #10141b;
+  stroke-width: 0.6px;
+  stroke-linejoin: round;
+}
+
 #calibrate-toggle.active {
   border-color: var(--gold);
   color: var(--gold);

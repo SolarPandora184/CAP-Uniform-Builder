@@ -38,7 +38,16 @@ const ANCHORS = {
   pocketFlap:   { x: 67.6, y: 35.2, align: "top" },   // CENTER of the pocket itself (NRA Marksmanship badge)
   pocketTop:    { x: 67.6, y: 34.2, align: "top" },      // TOP edge of the pocket (ribbon rack's bottom row rests exactly here)
   belowNametag: { x: 30.9, y: 37.5, align: "top" },      // TOP edge of the badge below the nameplate
-  aboveNametag: { x: 30.9, y: 32.0, align: "bottom" }    // BOTTOM edge of the badge above the nameplate
+  aboveNametag: { x: 30.9, y: 32.0, align: "bottom" },   // BOTTOM edge of the badge above the nameplate
+
+  // Reference-only points — NOT used for any badge placement. They exist
+  // purely so the dimension overlay (toggle button under the coat image)
+  // can draw and label the actual regulation gaps against something.
+  // Leave as null until calibrated; the overlay just skips lines it
+  // doesn't have data for, same null-safe pattern as everything else here.
+  pocketBottom:  { x: 67.6, y: null },
+  nametagTop:    { x: 30.9, y: null },
+  nametagBottom: { x: 30.9, y: null }
 };
 
 // Vertical spacing (% of image height) between stacked aviation badges.
@@ -73,6 +82,9 @@ const ANCHOR_OVERRIDES = {
     pocketTop:    { x: null, y: null, align: "top" },     // TOP edge of the pocket (ribbon rack rests here) — not yet calibrated
     belowNametag: { x: 30.3, y: 38.2, align: "top" },     // TOP edge of badge below the nameplate
     aboveNametag: { x: 30.3, y: 30.6, align: "bottom" },  // BOTTOM edge of badge above the nameplate
+    pocketBottom:  { x: null, y: null },  // BOTTOM edge of the pocket (for the measurement overlay)
+    nametagTop:    { x: null, y: null },  // TOP edge of the nameplate (for the measurement overlay)
+    nametagBottom: { x: null, y: null },  // BOTTOM edge of the nameplate (for the measurement overlay)
   },
 
   // --- BLUE ---------------------------------------------------
@@ -82,6 +94,9 @@ const ANCHOR_OVERRIDES = {
     pocketTop:    { x: null, y: null, align: "top" },     // TOP edge of the pocket (ribbon rack rests here)
     belowNametag: { x: null, y: null, align: "top" },     // TOP edge of badge below the nameplate
     aboveNametag: { x: null, y: null, align: "bottom" },  // BOTTOM edge of badge above the nameplate
+    pocketBottom:  { x: null, y: null },  // BOTTOM edge of the pocket (for the measurement overlay)
+    nametagTop:    { x: null, y: null },  // TOP edge of the nameplate (for the measurement overlay)
+    nametagBottom: { x: null, y: null },  // BOTTOM edge of the nameplate (for the measurement overlay)
   },
 
   // --- GREEN --------------------------------------------------
@@ -91,6 +106,9 @@ const ANCHOR_OVERRIDES = {
     pocketTop:    { x: null, y: null, align: "top" },
     belowNametag: { x: null, y: null, align: "top" },
     aboveNametag: { x: null, y: null, align: "bottom" },
+    pocketBottom:  { x: null, y: null },  // BOTTOM edge of the pocket (for the measurement overlay)
+    nametagTop:    { x: null, y: null },  // TOP edge of the nameplate (for the measurement overlay)
+    nametagBottom: { x: null, y: null },  // BOTTOM edge of the nameplate (for the measurement overlay)
   },
 
   // --- WHITE --------------------------------------------------
@@ -100,6 +118,9 @@ const ANCHOR_OVERRIDES = {
     pocketTop:    { x: null, y: null, align: "top" },
     belowNametag: { x: null, y: null, align: "top" },
     aboveNametag: { x: null, y: null, align: "bottom" },
+    pocketBottom:  { x: null, y: null },  // BOTTOM edge of the pocket (for the measurement overlay)
+    nametagTop:    { x: null, y: null },  // TOP edge of the nameplate (for the measurement overlay)
+    nametagBottom: { x: null, y: null },  // BOTTOM edge of the nameplate (for the measurement overlay)
   },
 
   // --- BLACK --------------------------------------------------
@@ -109,6 +130,9 @@ const ANCHOR_OVERRIDES = {
     pocketTop:    { x: null, y: null, align: "top" },
     belowNametag: { x: null, y: null, align: "top" },
     aboveNametag: { x: null, y: null, align: "bottom" },
+    pocketBottom:  { x: null, y: null },  // BOTTOM edge of the pocket (for the measurement overlay)
+    nametagTop:    { x: null, y: null },  // TOP edge of the nameplate (for the measurement overlay)
+    nametagBottom: { x: null, y: null },  // BOTTOM edge of the nameplate (for the measurement overlay)
   },
 
   // --- SILVER -------------------------------------------------
@@ -118,6 +142,9 @@ const ANCHOR_OVERRIDES = {
     pocketTop:    { x: null, y: null, align: "top" },
     belowNametag: { x: null, y: null, align: "top" },
     aboveNametag: { x: null, y: null, align: "bottom" },
+    pocketBottom:  { x: null, y: null },  // BOTTOM edge of the pocket (for the measurement overlay)
+    nametagTop:    { x: null, y: null },  // TOP edge of the nameplate (for the measurement overlay)
+    nametagBottom: { x: null, y: null },  // BOTTOM edge of the nameplate (for the measurement overlay)
   },
 
 };
@@ -223,6 +250,14 @@ function deriveAnchorsFromPrimitives(p) {
       belowNametag: { x: round1(p.nametagSideX), y: round1(p.nametagBottomY + 1.5 * inchesToPct), align: "top" },
       aboveNametag: { x: round1(p.nametagSideX), y: round1(p.nametagTopY - 0.5 * inchesToPct), align: "bottom" }
     },
+    // Raw reference points (not used for badge placement, only for the
+    // measurement overlay — it needs the actual nameplate/pocket edges,
+    // which otherwise get discarded once the anchors above are computed.
+    reference: {
+      pocketBottom:  { x: round1(p.pocketSideX), y: round1(p.pocketBottomY) },
+      nametagTop:    { x: round1(p.nametagSideX), y: round1(p.nametagTopY) },
+      nametagBottom: { x: round1(p.nametagSideX), y: round1(p.nametagBottomY) }
+    },
     inchesToPct,
     warnings: validatePrimitives(p, inchesToPct)
   };
@@ -321,7 +356,7 @@ function setupGuidedCalibration() {
 }
 
 function showGuidedResult(outputWrap, output) {
-  const { anchors, inchesToPct, warnings } = deriveAnchorsFromPrimitives(guidedValues);
+  const { anchors, reference, inchesToPct, warnings } = deriveAnchorsFromPrimitives(guidedValues);
   const profileLabel = selectedCord ? `cord: ${selectedCord}` : "default (no cord)";
 
   const lines = [];
@@ -332,9 +367,16 @@ function showGuidedResult(outputWrap, output) {
     warnings.forEach(w => lines.push(`//   - ${w}`));
   }
   lines.push("");
+  lines.push("// --- badge anchors (paste into ANCHORS or that cord's block) ---");
   for (const [key, val] of Object.entries(anchors)) {
     const pad = " ".repeat(Math.max(0, 13 - key.length));
     lines.push(`${key}:${pad}{ x: ${val.x}, y: ${val.y}, align: "${val.align}" },`);
+  }
+  lines.push("");
+  lines.push("// --- reference points (paste into the same block, needed for the measurement overlay) ---");
+  for (const [key, val] of Object.entries(reference)) {
+    const pad = " ".repeat(Math.max(0, 13 - key.length));
+    lines.push(`${key}:${pad}{ x: ${val.x}, y: ${val.y} },`);
   }
 
   outputWrap.hidden = false;
@@ -358,7 +400,7 @@ const selectedRibbons = new Set();
 let selectedCord = null;
 let selectedTrack = null;
 
-const DATA_VERSION = 11;
+const DATA_VERSION = 12;
 
 async function init() {
   const [badgeRes, cordRes, ribbonRes] = await Promise.all([
@@ -382,6 +424,7 @@ async function init() {
   setupRowSizeToggle();
   setupCalibration();
   setupGuidedCalibration();
+  setupMeasurementToggle();
   render();
 }
 
@@ -842,6 +885,76 @@ function setupCalibration() {
   });
 }
 
+let measurementsVisible = false;
+
+function setupMeasurementToggle() {
+  const btn = document.getElementById("measurement-toggle");
+  const svg = document.getElementById("measurement-overlay");
+  btn.addEventListener("click", () => {
+    measurementsVisible = !measurementsVisible;
+    btn.classList.toggle("active", measurementsVisible);
+    svg.hidden = !measurementsVisible;
+    render();
+  });
+}
+
+// Draws the actual CAPR 39-1 distance (a fixed number, always — this is
+// NOT a live ruler measuring the current pixel gap) between each pair of
+// real reference points, wherever they currently render. Purely a visual
+// aid: it never reads from or writes back into ANCHORS/placements, so it
+// can't affect badge positions no matter what it's toggled to.
+function renderMeasurements(ribbonTopY, placements) {
+  const svg = document.getElementById("measurement-overlay");
+  svg.innerHTML = "";
+  if (!measurementsVisible) return;
+
+  const anchors = getActiveAnchors();
+  const ns = "http://www.w3.org/2000/svg";
+
+  function drawGap(x, yTop, yBottom, label) {
+    if (!Number.isFinite(yTop) || !Number.isFinite(yBottom)) return;
+    const line = document.createElementNS(ns, "line");
+    line.setAttribute("class", "measurement-line");
+    line.setAttribute("x1", x); line.setAttribute("y1", yTop);
+    line.setAttribute("x2", x); line.setAttribute("y2", yBottom);
+    svg.appendChild(line);
+
+    [yTop, yBottom].forEach(y => {
+      const tick = document.createElementNS(ns, "line");
+      tick.setAttribute("class", "measurement-tick");
+      tick.setAttribute("x1", x - 1.2); tick.setAttribute("y1", y);
+      tick.setAttribute("x2", x + 1.2); tick.setAttribute("y2", y);
+      svg.appendChild(tick);
+    });
+
+    const text = document.createElementNS(ns, "text");
+    text.setAttribute("class", "measurement-label");
+    text.setAttribute("x", x + 1.8);
+    text.setAttribute("y", (yTop + yBottom) / 2 + 1);
+    text.textContent = label;
+    svg.appendChild(text);
+  }
+
+  // Pocket top -> pocket-slot badge (rocketry etc.): 1.5" per CAPR 39-1
+  drawGap(anchors.pocket.x, anchors.pocketTop.y, anchors.pocket.y, '1.5"');
+
+  // Nameplate bottom -> badge below nameplate: 1.5"
+  if (anchors.nametagBottom && anchors.nametagBottom.y != null) {
+    drawGap(anchors.belowNametag.x, anchors.nametagBottom.y, anchors.belowNametag.y, '1.5"');
+  }
+
+  // Nameplate top -> badge above nameplate: 0.5"
+  if (anchors.nametagTop && anchors.nametagTop.y != null) {
+    drawGap(anchors.aboveNametag.x, anchors.nametagTop.y, anchors.aboveNametag.y, '0.5"');
+  }
+
+  // Ribbon rack top (or pocket top, if no ribbons) -> first aviation badge: 0.5"
+  const aviationPlacement = placements.find(p => p.badge.category === "aviation_occupational");
+  if (aviationPlacement) {
+    drawGap(aviationPlacement.x, ribbonTopY, aviationPlacement.y, '0.5"');
+  }
+}
+
 function render() {
   updateCounts();
 
@@ -900,6 +1013,8 @@ function render() {
     img.src = `${BADGE_IMG_DIR}${badge.id}.png`;
     layer.appendChild(img);
   });
+
+  renderMeasurements(topY, placements);
 }
 
 init();

@@ -6,7 +6,7 @@
 <title>CAP Class A Badge Builder</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=11">
+<link rel="stylesheet" href="style.css?v=12">
 </head>
 <body>
 
@@ -55,11 +55,13 @@
       <svg id="cord-fallback" viewBox="0 0 100 100" preserveAspectRatio="none"></svg>
       <div id="ribbon-stack"></div>
       <div id="badge-layer"></div>
+      <svg id="measurement-overlay" class="measurement-overlay" viewBox="0 0 100 100" preserveAspectRatio="none" hidden></svg>
       <div id="calibrate-crosshair" class="crosshair" hidden></div>
     </div>
 
     <div class="stage-tools">
       <button id="calibrate-toggle" type="button">Calibrate anchors</button>
+      <button id="measurement-toggle" type="button">Show measurements</button>
       <span id="calibrate-readout" class="calibrate-readout"></span>
     </div>
     <p class="stage-caption">Front view &middot; wearer's right is image-left, wearer's left is image-right</p>
@@ -81,6 +83,6 @@
   <p>Placement logic follows CAPR 39-1 §4.1.5.2.2.4 and Attachment 4. This is a reference tool, not a substitute for the regulation &mdash; verify against the current CAPR 39-1 and your Wing's guidance before an inspection.</p>
 </footer>
 
-<script src="app.js?v=11"></script>
+<script src="app.js?v=12"></script>
 </body>
 </html>

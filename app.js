@@ -34,20 +34,24 @@ const RESTRICTION_LABEL = {
 // click "Calibrate anchors", click the described point, and paste the
 // x/y readout straight into that field.
 const ANCHORS = {
-  pocket:       { x: 67.6, y: 40.2, align: "top" },      // TOP edge of the pocket-slot badge (rocketry, or first queued specialty badge)
-  pocketFlap:   { x: 67.6, y: 36,   align: "center" },   // CENTER of the pocket itself (NRA Marksmanship badge)
-  pocketTop:    { x: 67.6, y: 34.4, align: "top" },      // TOP edge of the pocket (ribbon rack's bottom row rests exactly here)
-  belowNametag: { x: 31.2, y: 41.3, align: "top" },      // TOP edge of the badge below the nameplate
-  aboveNametag: { x: 31.2, y: 30.6, align: "bottom" },   // BOTTOM edge of the badge above the nameplate
+ pocketTop:    { x: 67.6, y: 34.4, align: "top" },
+pocketFlap:   { x: 67.6, y: 36, align: "center" },
+pocket:       { x: 67.6, y: 40, align: "top" },
+belowNametag: { x: 31, y: 41.1, align: "top" },
+aboveNametag: { x: 31, y: 30.8, align: "bottom" },
 
+// --- reference points (paste into the same block, needed for the measurement overlay) ---
+pocketBottom: { x: 67.6, y: 37.6 },
+nametagTop:   { x: 31, y: 32.7 },
+nametagBottom:{ x: 31, y: 35.5 },
   // Reference-only points — NOT used for any badge placement. They exist
   // purely so the dimension overlay (toggle button under the coat image)
   // can draw and label the actual regulation gaps against something.
   // Leave as null until calibrated; the overlay just skips lines it
   // doesn't have data for, same null-safe pattern as everything else here.
-  pocketBottom:  { x: 67.6, y: null },
-  nametagTop:    { x: 31.2, y: null },
-  nametagBottom: { x: 31.2, y: null }
+pocketBottom: { x: 67.6, y: 37.6 },
+nametagTop:   { x: 31, y: 32.7 },
+nametagBottom:{ x: 31, y: 35.5 },
 };
 
 // Vertical spacing (% of image height) between stacked aviation badges.

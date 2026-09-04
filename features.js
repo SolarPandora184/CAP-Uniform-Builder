@@ -14,13 +14,13 @@ const FEATURES = {
   // Sidebar sections
   cords: true,                  // "Shoulder Cord" dropdown + coat/cord photo swapping
   specialtyTrackDropdown: true, // "Specialty Track Badge" dropdown (Communications/Safety/ES)
-  collarInsignia: true,         // "Collar Insignia" checkbox + rendering at both collar points
+  collarInsignia: false,         // "Collar Insignia" checkbox + rendering at both collar points
   badgeChecklist: true,         // Main badge checklist (rocketry, STEM, cyber, NRA marksmanship, sUAS)
   ribbons: true,                // "Ribbons" checklist + rack rendering on the coat
-  ribbonRowSizeToggle: true,    // The 3-per-row / 4-per-row buttons inside the ribbons section
+  ribbonRowSizeToggle: false,    // The 3-per-row / 4-per-row buttons inside the ribbons section
 
   // Calibration & verification tools
-  freeformCalibration: true,    // "Calibrate anchors" click-to-read-x/y% tool
+  freeformCalibration: false,    // "Calibrate anchors" click-to-read-x/y% tool
   guidedCalibration: true,      // "Start guided calibration" 6-click panel with code output
   measurementOverlay: true,     // "Show measurements" regulation-distance overlay
 };

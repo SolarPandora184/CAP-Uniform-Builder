@@ -1,3 +1,23 @@
+// Defensive fallback: if features.js failed to load for any reason
+// (network hiccup, wrong path, stale cache before this check existed —
+// exactly what happened once already in this project, where a stale
+// cached features.js without CORD_VISIBILITY caused renderCordOptions()
+// to throw and silently cascade into breaking every setup step after
+// it, including the specialty track dropdown), fail OPEN rather than
+// crashing: default everything to enabled instead of leaving FEATURES
+// undefined and taking down the rest of init() with it.
+if (typeof FEATURES === "undefined") {
+  console.warn("features.js did not load — defaulting all features to enabled.");
+  window.FEATURES = {
+    cords: true, specialtyTrackDropdown: true, collarInsignia: true,
+    badgeChecklist: true, ribbons: true, ribbonRowSizeToggle: true,
+    freeformCalibration: true, guidedCalibration: true, measurementOverlay: true
+  };
+}
+if (typeof CORD_VISIBILITY === "undefined") {
+  window.CORD_VISIBILITY = {};
+}
+
 const CATEGORY_META = {
   aviation_occupational: {
     label: "Aviation & Occupational Badges",
@@ -437,7 +457,7 @@ const selectedRibbons = new Set();
 let selectedCord = null;
 let selectedTrack = null;
 
-const DATA_VERSION = 20;
+const DATA_VERSION = 21;
 
 async function init() {
   applyFeatureFlags();
@@ -457,15 +477,26 @@ async function init() {
   RIBBONS = ribbonData.ribbons;
   RIBBON_ROW_SIZE = ribbonData.rowSize || 3;
 
-  if (FEATURES.badgeChecklist) renderChecklist();
-  if (FEATURES.cords) renderCordOptions();
-  if (FEATURES.specialtyTrackDropdown) renderTrackOptions();
-  if (FEATURES.ribbons) renderRibbonChecklist();
-  if (FEATURES.ribbonRowSizeToggle) setupRowSizeToggle();
-  if (FEATURES.freeformCalibration) setupCalibration();
-  if (FEATURES.guidedCalibration) setupGuidedCalibration();
-  if (FEATURES.collarInsignia) setupCollarInsignia();
-  if (FEATURES.measurementOverlay) setupMeasurementToggle();
+  // Each step runs independently — if one throws (bad data, a missing
+  // element, whatever), it's logged and skipped rather than silently
+  // aborting every step after it. This is what let a single features.js
+  // caching issue take down the specialty track dropdown along with
+  // cords, even though the two features are otherwise unrelated.
+  const steps = [
+    [FEATURES.badgeChecklist, renderChecklist],
+    [FEATURES.cords, renderCordOptions],
+    [FEATURES.specialtyTrackDropdown, renderTrackOptions],
+    [FEATURES.ribbons, renderRibbonChecklist],
+    [FEATURES.ribbonRowSizeToggle, setupRowSizeToggle],
+    [FEATURES.freeformCalibration, setupCalibration],
+    [FEATURES.guidedCalibration, setupGuidedCalibration],
+    [FEATURES.collarInsignia, setupCollarInsignia],
+    [FEATURES.measurementOverlay, setupMeasurementToggle]
+  ];
+  for (const [enabled, fn] of steps) {
+    if (!enabled) continue;
+    try { fn(); } catch (err) { console.error(`Setup step "${fn.name}" failed:`, err); }
+  }
   render();
 }
 

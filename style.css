@@ -226,6 +226,7 @@ body {
 
 #ribbon-stack,
 #badge-layer,
+#insignia-layer,
 #cord-fallback {
   position: absolute;
   inset: 0;
@@ -235,6 +236,11 @@ body {
 
 #cord-fallback {
   pointer-events: none;
+}
+
+.insignia-pin {
+  position: absolute;
+  transform: translate(-50%, -50%);
 }
 
 .stage-tools {

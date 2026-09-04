@@ -210,6 +210,20 @@ const RIBBON_OVERLAP = 1.06;
 // per-badge tuning.
 const BADGE_BOX_PX = 70;
 
+// Collar insignia: metal chevrons replace CAP lapel lettering for cadet
+// NCOs (CAPR 39-1 4.1.5.2.2.1.3), same position on both collar points.
+// Positions are a rough visual estimate from the base coat photo (roughly
+// symmetric around the 50% centerline as a sanity check), NOT precisely
+// measured against "halfway up the lapel seam, resting on but not over
+// it" per the reg — refine with the freeform "Calibrate anchors" tool
+// once real chevron artwork is in place. Same image renders at both
+// points (mirrored), from images/insignia/collar_chevron.png.
+const COLLAR_INSIGNIA = {
+  left:  { x: 41.4, y: 4.0 },
+  right: { x: 58.5, y: 4.0 }
+};
+let showCollarInsignia = false;
+
 const RIBBON_RACK_WIDTH = 15.6; // total rack width in % of image width, centered on the ACTIVE profile's pocket-side x
 
 function getRibbonRackBounds() {
@@ -404,7 +418,7 @@ const selectedRibbons = new Set();
 let selectedCord = null;
 let selectedTrack = null;
 
-const DATA_VERSION = 16;
+const DATA_VERSION = 17;
 
 async function init() {
   const [badgeRes, cordRes, ribbonRes] = await Promise.all([
@@ -428,6 +442,7 @@ async function init() {
   setupRowSizeToggle();
   setupCalibration();
   setupGuidedCalibration();
+  setupCollarInsignia();
   setupMeasurementToggle();
   render();
 }
@@ -891,6 +906,37 @@ function setupCalibration() {
 
 let measurementsVisible = false;
 
+function setupCollarInsignia() {
+  const cb = document.getElementById("collar-insignia-toggle");
+  cb.addEventListener("change", () => {
+    showCollarInsignia = cb.checked;
+    render();
+  });
+}
+
+function renderCollarInsignia() {
+  const layer = document.getElementById("insignia-layer");
+  layer.innerHTML = "";
+  if (!showCollarInsignia) return;
+
+  [COLLAR_INSIGNIA.left, COLLAR_INSIGNIA.right].forEach(pos => {
+    const img = document.createElement("img");
+    img.className = "insignia-pin";
+    img.alt = "Collar insignia";
+    img.title = "Collar insignia (placeholder — position is an estimate)";
+    img.style.left = `${pos.x}%`;
+    img.style.top = `${pos.y}%`;
+    img.addEventListener("error", () => { img.style.display = "none"; });
+    img.addEventListener("load", () => {
+      const scale = Math.min(BADGE_BOX_PX / img.naturalWidth, BADGE_BOX_PX / img.naturalHeight);
+      img.style.width = `${(img.naturalWidth * scale / COAT_IMG.width) * 100}%`;
+      img.style.height = `${(img.naturalHeight * scale / COAT_IMG.height) * 100}%`;
+    });
+    img.src = "images/insignia/collar_chevron.png";
+    layer.appendChild(img);
+  });
+}
+
 function setupMeasurementToggle() {
   const btn = document.getElementById("measurement-toggle");
   const svg = document.getElementById("measurement-overlay");
@@ -1051,6 +1097,7 @@ function render() {
     layer.appendChild(img);
   });
 
+  renderCollarInsignia();
   renderMeasurements(topY, placements);
 }
 

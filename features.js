@@ -17,7 +17,7 @@ const FEATURES = {
   collarInsignia: false,         // "Collar Insignia" checkbox + rendering at both collar points
   badgeChecklist: true,         // Main badge checklist (rocketry, STEM, cyber, NRA marksmanship, sUAS)
   ribbons: true,                // "Ribbons" checklist + rack rendering on the coat
-  ribbonRowSizeToggle: false,    // The 3-per-row / 4-per-row buttons inside the ribbons section
+  ribbonRowSizeToggle: true,    // The 3-per-row / 4-per-row buttons inside the ribbons section
 
   // Calibration & verification tools
   freeformCalibration: false,    // "Calibrate anchors" click-to-read-x/y% tool

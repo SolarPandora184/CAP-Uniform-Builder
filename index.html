@@ -6,7 +6,7 @@
 <title>CAP Class A Badge Builder</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=17">
+<link rel="stylesheet" href="style.css?v=18">
 </head>
 <body>
 
@@ -23,17 +23,17 @@
 
 <main class="layout">
   <aside class="panel checklist" id="checklist">
-    <div class="cat-group">
+    <div class="cat-group" id="feature-cords">
       <h2>Shoulder Cord</h2>
       <p class="cat-sub">Only one worn at a time. Uses a real coat+cord photo if uploaded, otherwise a placeholder band.</p>
       <select id="cord-select" class="cord-select"></select>
     </div>
-    <div class="cat-group">
+    <div class="cat-group" id="feature-specialty-track">
       <h2>Specialty Track Badge</h2>
       <p class="cat-sub">Only one worn at a time, counts toward the 4-badge total below.</p>
       <select id="track-select" class="cord-select"></select>
     </div>
-    <div class="cat-group">
+    <div class="cat-group" id="feature-collar-insignia">
       <h2>Collar Insignia</h2>
       <p class="cat-sub">Metal chevrons replace CAP lapel lettering for cadet NCOs (CAPR 39-1 4.1.5.2.2.1.3). Position is an estimate — placeholder image, not final artwork.</p>
       <div class="badge-row">
@@ -42,12 +42,14 @@
       </div>
     </div>
     <!-- badge checklist populated by app.js -->
-    <div id="badge-checklist"></div>
+    <div id="feature-badge-checklist">
+      <div id="badge-checklist"></div>
+    </div>
 
-    <div class="cat-group">
+    <div class="cat-group" id="feature-ribbons">
       <h2>Ribbons</h2>
       <p class="cat-sub">Bottom row rests on top of the pocket. Highest precedence sorts to the top row automatically.</p>
-      <div class="row-size-toggle">
+      <div class="row-size-toggle" id="feature-ribbon-row-toggle">
         <span>Ribbons per row:</span>
         <button type="button" class="row-size-btn active" data-size="3">3</button>
         <button type="button" class="row-size-btn" data-size="4">4</button>
@@ -92,6 +94,7 @@
   <p>Placement logic follows CAPR 39-1 §4.1.5.2.2.4 and Attachment 4. This is a reference tool, not a substitute for the regulation &mdash; verify against the current CAPR 39-1 and your Wing's guidance before an inspection.</p>
 </footer>
 
-<script src="app.js?v=17"></script>
+<script src="features.js?v=1"></script>
+<script src="app.js?v=18"></script>
 </body>
 </html>

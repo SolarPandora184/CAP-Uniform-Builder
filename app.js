@@ -418,9 +418,11 @@ const selectedRibbons = new Set();
 let selectedCord = null;
 let selectedTrack = null;
 
-const DATA_VERSION = 17;
+const DATA_VERSION = 18;
 
 async function init() {
+  applyFeatureFlags();
+
   const [badgeRes, cordRes, ribbonRes] = await Promise.all([
     fetch(`badges.json?v=${DATA_VERSION}`),
     fetch(`cords.json?v=${DATA_VERSION}`),
@@ -435,16 +437,42 @@ async function init() {
   CORDS = cordData.cords;
   RIBBONS = ribbonData.ribbons;
   RIBBON_ROW_SIZE = ribbonData.rowSize || 3;
-  renderChecklist();
-  renderCordOptions();
-  renderTrackOptions();
-  renderRibbonChecklist();
-  setupRowSizeToggle();
-  setupCalibration();
-  setupGuidedCalibration();
-  setupCollarInsignia();
-  setupMeasurementToggle();
+
+  if (FEATURES.badgeChecklist) renderChecklist();
+  if (FEATURES.cords) renderCordOptions();
+  if (FEATURES.specialtyTrackDropdown) renderTrackOptions();
+  if (FEATURES.ribbons) renderRibbonChecklist();
+  if (FEATURES.ribbonRowSizeToggle) setupRowSizeToggle();
+  if (FEATURES.freeformCalibration) setupCalibration();
+  if (FEATURES.guidedCalibration) setupGuidedCalibration();
+  if (FEATURES.collarInsignia) setupCollarInsignia();
+  if (FEATURES.measurementOverlay) setupMeasurementToggle();
   render();
+}
+
+// Hides each feature's entire section per features.js — doesn't delete
+// any code/data, so flipping a flag back to true later restores it
+// exactly as it was. Runs before anything else in init().
+function applyFeatureFlags() {
+  const hide = id => { const el = document.getElementById(id); if (el) el.hidden = true; };
+
+  if (!FEATURES.cords) hide("feature-cords");
+  if (!FEATURES.specialtyTrackDropdown) hide("feature-specialty-track");
+  if (!FEATURES.collarInsignia) hide("feature-collar-insignia");
+  if (!FEATURES.badgeChecklist) hide("feature-badge-checklist");
+  if (!FEATURES.ribbons) hide("feature-ribbons");
+  else if (!FEATURES.ribbonRowSizeToggle) hide("feature-ribbon-row-toggle");
+
+  if (!FEATURES.freeformCalibration) {
+    hide("calibrate-toggle");
+    hide("calibrate-readout");
+    hide("calibrate-crosshair");
+  }
+  if (!FEATURES.guidedCalibration) hide("guided-calibration");
+  if (!FEATURES.measurementOverlay) {
+    hide("measurement-toggle");
+    hide("measurement-overlay");
+  }
 }
 
 function setupRowSizeToggle() {

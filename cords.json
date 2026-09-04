@@ -2,39 +2,46 @@
   "cords": [
     {
       "id": "red",
-      "name": "Red Cord (Wing/Region CAC)",
+      "name": "Red",
       "hex": "#b3372f",
       "image": "images/cords/coat-front-cord-red.png"
     },
     {
       "id": "blue",
-      "name": "Blue Cord",
+      "name": "Blue",
       "hex": "#33507a",
       "image": "images/cords/coat-front-cord-blue.png"
     },
     {
       "id": "white",
-      "name": "White Cord",
+      "name": "White",
       "hex": "#e8e6df",
       "image": "images/cords/coat-front-cord-white.png"
     },
     {
       "id": "black",
-      "name": "Black Cord",
+      "name": "Black",
       "hex": "#20242b",
       "image": "images/cords/coat-front-cord-black.png"
     },
     {
       "id": "green",
-      "name": "Green Cord",
+      "name": "Green",
       "hex": "#3f6b3f",
       "image": "images/cords/coat-front-cord-green.png"
     },
     {
       "id": "silver",
-      "name": "Silver Cord (Honor Guard)",
+      "name": "Silver",
       "hex": "#b9bec7",
       "image": "images/cords/coat-front-cord-silver.png"
+    },
+    {
+      "id": "blue_red",
+      "name": "Blue/Red",
+      "hex": "#33507a",
+      "hex2": "#b3372f",
+      "image": "images/cords/coat-front-cord-blue_red.png"
     }
   ]
 }

@@ -24,3 +24,17 @@ const FEATURES = {
   guidedCalibration: true,      // "Start guided calibration" 6-click panel with code output
   measurementOverlay: true,     // "Show measurements" regulation-distance overlay
 };
+
+// Per-cord visibility, independent of the "cords" switch above (which
+// controls the whole Shoulder Cord section). Set any color to `false` to
+// remove just that one option from the dropdown — the rest still show.
+// A color left out entirely defaults to visible.
+const CORD_VISIBILITY = {
+  red: true,
+  blue: true,
+  blue_red: true,
+  white: true,
+  black: true,
+  green: true,
+  silver: true,
+};

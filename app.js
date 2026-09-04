@@ -151,6 +151,18 @@ nametagBottom:{ x: 30.4, y: 36 },
     nametagBottom: { x: null, y: null },  // BOTTOM edge of the nameplate (for the measurement overlay)
   },
 
+  // --- BLUE/RED -------------------------------------------------
+  blue_red: {
+    pocket:       { x: null, y: null, align: "top" },
+    pocketFlap:   { x: null, y: null, align: "center" },
+    pocketTop:    { x: null, y: null, align: "top" },
+    belowNametag: { x: null, y: null, align: "top" },
+    aboveNametag: { x: null, y: null, align: "bottom" },
+    pocketBottom:  { x: null, y: null },  // BOTTOM edge of the pocket (for the measurement overlay)
+    nametagTop:    { x: null, y: null },  // TOP edge of the nameplate (for the measurement overlay)
+    nametagBottom: { x: null, y: null },  // BOTTOM edge of the nameplate (for the measurement overlay)
+  },
+
 };
 
 function getActiveAnchors() {
@@ -425,7 +437,7 @@ const selectedRibbons = new Set();
 let selectedCord = null;
 let selectedTrack = null;
 
-const DATA_VERSION = 19;
+const DATA_VERSION = 20;
 
 async function init() {
   applyFeatureFlags();
@@ -848,7 +860,7 @@ function renderCordOptions() {
   noneOpt.textContent = "None";
   select.appendChild(noneOpt);
 
-  CORDS.forEach(c => {
+  CORDS.filter(c => CORD_VISIBILITY[c.id] !== false).forEach(c => {
     const opt = document.createElement("option");
     opt.value = c.id;
     opt.textContent = c.name;
@@ -880,31 +892,57 @@ function renderCord() {
     // No real photo uploaded yet — keep the plain coat and draw a
     // simple placeholder band in the cord's color instead.
     coatImg.src = "images/coat-front.png";
-    drawFallbackCord(cord.hex);
+    drawFallbackCord(cord.hex, cord.hex2);
   };
   probe.src = cord.image;
 }
 
-function drawFallbackCord(hex) {
+function drawFallbackCord(hex, hex2) {
   const svg = document.getElementById("cord-fallback");
   const points = CORD_PATH.map(p => `${p.x},${p.y}`).join(" ");
   const ns = "http://www.w3.org/2000/svg";
 
-  const line = document.createElementNS(ns, "polyline");
-  line.setAttribute("points", points);
-  line.setAttribute("fill", "none");
-  line.setAttribute("stroke", hex);
-  line.setAttribute("stroke-width", "3.2");
-  line.setAttribute("stroke-linecap", "round");
-  line.setAttribute("stroke-linejoin", "round");
-  line.setAttribute("vector-effect", "non-scaling-stroke");
-  svg.appendChild(line);
+  if (hex2) {
+    // Two-tone cord (e.g. Blue/Red): draw the base color solid, then
+    // overlay a dashed second color so it reads as a twisted two-color
+    // cord rather than a flat single-color line.
+    const base = document.createElementNS(ns, "polyline");
+    base.setAttribute("points", points);
+    base.setAttribute("fill", "none");
+    base.setAttribute("stroke", hex);
+    base.setAttribute("stroke-width", "3.2");
+    base.setAttribute("stroke-linecap", "round");
+    base.setAttribute("stroke-linejoin", "round");
+    base.setAttribute("vector-effect", "non-scaling-stroke");
+    svg.appendChild(base);
+
+    const twist = document.createElementNS(ns, "polyline");
+    twist.setAttribute("points", points);
+    twist.setAttribute("fill", "none");
+    twist.setAttribute("stroke", hex2);
+    twist.setAttribute("stroke-width", "3.2");
+    twist.setAttribute("stroke-linecap", "butt");
+    twist.setAttribute("stroke-linejoin", "round");
+    twist.setAttribute("stroke-dasharray", "1.4 1.4");
+    twist.setAttribute("vector-effect", "non-scaling-stroke");
+    svg.appendChild(twist);
+  } else {
+    const line = document.createElementNS(ns, "polyline");
+    line.setAttribute("points", points);
+    line.setAttribute("fill", "none");
+    line.setAttribute("stroke", hex);
+    line.setAttribute("stroke-width", "3.2");
+    line.setAttribute("stroke-linecap", "round");
+    line.setAttribute("stroke-linejoin", "round");
+    line.setAttribute("vector-effect", "non-scaling-stroke");
+    svg.appendChild(line);
+  }
 
   const loop = document.createElementNS(ns, "circle");
   loop.setAttribute("cx", CORD_PATH[0].x);
   loop.setAttribute("cy", CORD_PATH[0].y);
   loop.setAttribute("r", "1.8");
-  loop.setAttribute("fill", hex);
+  loop.setAttribute("fill", hex2 || hex);
   svg.appendChild(loop);
 }
 

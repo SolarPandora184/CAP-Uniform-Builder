@@ -224,13 +224,20 @@ const COLLAR_INSIGNIA = {
 };
 let showCollarInsignia = false;
 
-const RIBBON_RACK_WIDTH = 15.6; // total rack width in % of image width, centered on the ACTIVE profile's pocket-side x
+// Fixed physical width per ribbon (real ribbon devices don't change size
+// based on how many are in a row — only the rack's total width changes).
+// Based on the 3-per-row baseline: 15.6% total / 3 = 5.2% per ribbon.
+// Switching to 4-per-row keeps this same per-ribbon width and just makes
+// the rack wider (rowSize * RIBBON_SLOT_WIDTH), still centered on the
+// same point — it does NOT shrink ribbons to fit a fixed total width.
+const RIBBON_SLOT_WIDTH = 15.6 / 3;
 
 function getRibbonRackBounds() {
   const center = getActiveAnchors().pocket.x; // already reflects any per-cord override
+  const totalWidth = RIBBON_SLOT_WIDTH * RIBBON_ROW_SIZE;
   return {
-    leftPct: center - RIBBON_RACK_WIDTH / 2,
-    rightPct: center + RIBBON_RACK_WIDTH / 2
+    leftPct: center - totalWidth / 2,
+    rightPct: center + totalWidth / 2
   };
 }
 
@@ -418,7 +425,7 @@ const selectedRibbons = new Set();
 let selectedCord = null;
 let selectedTrack = null;
 
-const DATA_VERSION = 18;
+const DATA_VERSION = 19;
 
 async function init() {
   applyFeatureFlags();

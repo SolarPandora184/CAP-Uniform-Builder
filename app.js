@@ -250,6 +250,46 @@ const BADGE_BOX_PX = 70;
 // refreshed once it's available (see the badge onload handler in render()).
 const badgeRenderedHeights = {};
 
+// Real content bounds (top/bottom, as a 0-1 fraction of the image's own
+// height) per badge id, populated once each image loads. A badge's true
+// visual edge — "the lowest silver point on the badge," not just the
+// image canvas's bottom edge — can sit anywhere inside the canvas if
+// there's any transparent padding around the design. Scans actual pixel
+// alpha via an offscreen canvas rather than assuming the opaque content
+// fills the whole image (which happened to be true for the sUAS badge
+// specifically, but isn't guaranteed for any other badge).
+const badgeContentBounds = {};
+
+function getOpaqueContentBounds(img) {
+  const canvas = document.createElement("canvas");
+  canvas.width = img.naturalWidth;
+  canvas.height = img.naturalHeight;
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(img, 0, 0);
+
+  let data;
+  try {
+    data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+  } catch (err) {
+    return null; // e.g. blocked by CORS — caller falls back to full bbox
+  }
+
+  let top = null, bottom = null;
+  for (let y = 0; y < canvas.height; y++) {
+    let rowHasContent = false;
+    const rowStart = y * canvas.width * 4;
+    for (let x = 0; x < canvas.width; x++) {
+      if (data[rowStart + x * 4 + 3] > 20) { rowHasContent = true; break; }
+    }
+    if (rowHasContent) {
+      if (top === null) top = y;
+      bottom = y;
+    }
+  }
+  if (top === null) return null;
+  return { topFrac: top / canvas.height, bottomFrac: bottom / canvas.height };
+}
+
 // Collar insignia: metal chevrons replace CAP lapel lettering for cadet
 // NCOs (CAPR 39-1 4.1.5.2.2.1.3), same position on both collar points.
 // Positions are a rough visual estimate from the base coat photo (roughly
@@ -465,7 +505,7 @@ const selectedRibbons = new Set();
 let selectedCord = null;
 let selectedTrack = null;
 
-const DATA_VERSION = 22;
+const DATA_VERSION = 23;
 
 async function init() {
   applyFeatureFlags();
@@ -1168,9 +1208,14 @@ function renderMeasurements(ribbonTopY, placements) {
   const aviationPlacement = placements.find(p => p.badge.category === "aviation_occupational");
   if (aviationPlacement) {
     const knownHeight = badgeRenderedHeights[aviationPlacement.badge.id];
-    const aviationBottomY = knownHeight != null
-      ? aviationPlacement.y + knownHeight / 2
-      : aviationPlacement.y;
+    let aviationBottomY = aviationPlacement.y; // fallback: center, until height is known
+    if (knownHeight != null) {
+      const badgeTopY = aviationPlacement.y - knownHeight / 2;
+      const contentBounds = badgeContentBounds[aviationPlacement.badge.id];
+      aviationBottomY = contentBounds
+        ? badgeTopY + contentBounds.bottomFrac * knownHeight // true lowest opaque point (e.g. the lowest silver point)
+        : aviationPlacement.y + knownHeight / 2;              // fallback: full bounding-box bottom
+    }
     drawRegGap(aviationPlacement.x, aviationBottomY, ribbonTopY, 0.5, 1, '0.5"');
   }
 }
@@ -1233,9 +1278,11 @@ function render() {
 
       // The measurement overlay needs real edges, not center points, for
       // center-aligned badges (aviation badges) — but the actual rendered
-      // height isn't known until the image loads. Cache it here and
-      // refresh the overlay now that it's available.
+      // height and content bounds aren't known until the image loads.
+      // Cache both here and refresh the overlay now that they're available.
       badgeRenderedHeights[badge.id] = heightPct;
+      const contentBounds = getOpaqueContentBounds(img);
+      if (contentBounds) badgeContentBounds[badge.id] = contentBounds;
       if (measurementsVisible) renderMeasurements(topYVisual, placements);
     });
     img.src = `${BADGE_IMG_DIR}${badge.id}.png`;

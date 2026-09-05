@@ -242,6 +242,14 @@ const RIBBON_OVERLAP = 1.06;
 // per-badge tuning.
 const BADGE_BOX_PX = 70;
 
+// Actual rendered height (% of COAT_IMG.height) per badge id, populated
+// once each badge image loads. Needed so the measurement overlay can draw
+// to a center-aligned badge's real TOP/BOTTOM edge instead of its center
+// point — that height isn't known synchronously, only after the image
+// loads, so this is filled in asynchronously and the overlay is
+// refreshed once it's available (see the badge onload handler in render()).
+const badgeRenderedHeights = {};
+
 // Collar insignia: metal chevrons replace CAP lapel lettering for cadet
 // NCOs (CAPR 39-1 4.1.5.2.2.1.3), same position on both collar points.
 // Positions are a rough visual estimate from the base coat photo (roughly
@@ -457,7 +465,7 @@ const selectedRibbons = new Set();
 let selectedCord = null;
 let selectedTrack = null;
 
-const DATA_VERSION = 21;
+const DATA_VERSION = 22;
 
 async function init() {
   applyFeatureFlags();
@@ -774,7 +782,7 @@ function layoutRibbonRack() {
     const rackWidth0 = rackBounds.rightPct - rackBounds.leftPct;
     const slotWidth0 = rackWidth0 / RIBBON_ROW_SIZE;
     const rowHeightPct0 = ((slotWidth0 / 100) * COAT_IMG.width / RIBBON_ASPECT / COAT_IMG.height) * 100;
-    return { placements, topY: pocketTopY, aviationGapPct: rowHeightPct0 * (0.5 / 0.375) };
+    return { placements, topY: pocketTopY, topYVisual: pocketTopY, aviationGapPct: rowHeightPct0 * (0.5 / 0.375) };
   }
 
   const rowSize = RIBBON_ROW_SIZE;
@@ -826,7 +834,18 @@ function layoutRibbonRack() {
   // row height scaled by (0.5 / 0.375).
   const aviationGapPct = rowHeightPct * (0.5 / 0.375);
   const topY = pocketTopY - rows.length * rowHeightPct;
-  return { placements, topY, aviationGapPct };
+
+  // topY above is the mathematically-exact top edge, used for badge
+  // positioning. But the top ribbon's actual RENDERED image is drawn
+  // slightly taller than rowHeightPct (RIBBON_OVERLAP, see render()) to
+  // guarantee zero visible gap between rows — which also pushes its
+  // real visual top edge slightly higher than topY. topYVisual corrects
+  // for that, so the measurement overlay lands on the true rendered top
+  // instead of a bit into the top row. Badge positioning still uses the
+  // uncorrected topY/aviationGapPct above, unaffected by this.
+  const topYVisual = topY - (rowHeightPct * (RIBBON_OVERLAP - 1)) / 2;
+
+  return { placements, topY, topYVisual, aviationGapPct };
 }
 
 function renderTrackOptions() {
@@ -1057,6 +1076,12 @@ function setupMeasurementToggle() {
 // real reference points, wherever they currently render. Purely a visual
 // aid: it never reads from or writes back into ANCHORS/placements, so it
 // can't affect badge positions no matter what it's toggled to.
+// ribbonTopY here is the VISUALLY-corrected top edge of the ribbon rack
+// (topYVisual from layoutRibbonRack), not the mathematically-exact one
+// used for badge positioning — those differ slightly because the
+// rendered ribbon images are drawn a little taller than their exact
+// row height (RIBBON_OVERLAP) to guarantee no visible gap between rows,
+// which also pushes the real top edge higher than the exact math would.
 function renderMeasurements(ribbonTopY, placements) {
   const svg = document.getElementById("measurement-overlay");
   svg.innerHTML = "";
@@ -1136,9 +1161,17 @@ function renderMeasurements(ribbonTopY, placements) {
   drawRegGap(anchors.aboveNametag.x, anchors.aboveNametag.y, anchors.nametagTop?.y, 0.5, 1, '0.5"');
 
   // Ribbon rack top (or pocket top, if no ribbons) -> first aviation badge: 0.5"
+  // Aviation badges are center-aligned (anchors.pocket.x shared, but the
+  // badge's own y is its CENTER, not an edge) — use the real bottom edge
+  // once its height is known (badgeRenderedHeights, set on image load),
+  // falling back to the center point for one frame until then.
   const aviationPlacement = placements.find(p => p.badge.category === "aviation_occupational");
   if (aviationPlacement) {
-    drawRegGap(aviationPlacement.x, aviationPlacement.y, ribbonTopY, 0.5, 1, '0.5"');
+    const knownHeight = badgeRenderedHeights[aviationPlacement.badge.id];
+    const aviationBottomY = knownHeight != null
+      ? aviationPlacement.y + knownHeight / 2
+      : aviationPlacement.y;
+    drawRegGap(aviationPlacement.x, aviationBottomY, ribbonTopY, 0.5, 1, '0.5"');
   }
 }
 
@@ -1147,7 +1180,7 @@ function render() {
 
   const rackLayer = document.getElementById("ribbon-stack");
   rackLayer.innerHTML = "";
-  const { placements: ribbonPlacements, topY, aviationGapPct } = layoutRibbonRack();
+  const { placements: ribbonPlacements, topY, topYVisual, aviationGapPct } = layoutRibbonRack();
 
   ribbonPlacements.forEach(({ ribbon, x, y, width, height }) => {
     const img = document.createElement("img");
@@ -1194,15 +1227,23 @@ function render() {
       const scale = Math.min(BADGE_BOX_PX / img.naturalWidth, BADGE_BOX_PX / img.naturalHeight);
       const renderedWidthPx = img.naturalWidth * scale;
       const renderedHeightPx = img.naturalHeight * scale;
+      const heightPct = (renderedHeightPx / COAT_IMG.height) * 100;
       img.style.width = `${(renderedWidthPx / COAT_IMG.width) * 100}%`;
-      img.style.height = `${(renderedHeightPx / COAT_IMG.height) * 100}%`;
+      img.style.height = `${heightPct}%`;
+
+      // The measurement overlay needs real edges, not center points, for
+      // center-aligned badges (aviation badges) — but the actual rendered
+      // height isn't known until the image loads. Cache it here and
+      // refresh the overlay now that it's available.
+      badgeRenderedHeights[badge.id] = heightPct;
+      if (measurementsVisible) renderMeasurements(topYVisual, placements);
     });
     img.src = `${BADGE_IMG_DIR}${badge.id}.png`;
     layer.appendChild(img);
   });
 
   renderCollarInsignia();
-  renderMeasurements(topY, placements);
+  renderMeasurements(topYVisual, placements);
 }
 
 init();
